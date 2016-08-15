@@ -79,6 +79,7 @@ class Gui {
         // Tool panel
         this.tools.style.position = "fixed";
         this.tools.style.top = 0;
+        this.tools.style.bottom = 0;
         this.tools.style.left = 0;
 
         this.fullscreen.addEventListener("click", () => {
@@ -99,7 +100,6 @@ class Gui {
         });
 
         connectFieldSliderSpinbox("spacing", null, app, "strokeSpacing");
-
         this.proportionalSpacing.addEventListener("change", (event) => {
             if (this.proportionalSpacing.checked) {
                 app.strokeSpacing = app.strokeSpacing / Math.sqrt(brush.width * brush.height);
@@ -141,7 +141,6 @@ class Gui {
                 this.fixedRatioOutput.value = app.brushRatio.toFixed(3);
             }
         }, brush);
-
         connectFieldSliderSpinbox("height", (event) => {
             if (this.fixedRatio.checked) {
                 brush.width = this.height.value * app.brushRatio;
@@ -153,13 +152,11 @@ class Gui {
                 this.fixedRatioOutput.value = app.brushRatio.toFixed(3);
             }
         }, brush);
-
         this.fixedRatioOutput.value = app.brushRatio.toFixed(3);
 
         connectFieldSliderSpinbox("angle", null, brush);
 
         connectFieldSliderSpinbox("bias", null, brush);
-
         connectFieldSliderSpinbox("gain", null, brush);
 
         this.colour.value = app.colour;
@@ -173,7 +170,6 @@ class Gui {
         connectFieldSliderSpinbox("levels", (event) => {
             this.bits.value = Math.ceil(Math.log2(this.levels.value));
             this.bitsSlider.value = this.bits.value;
-            this.levelsSlider.value = this.levels.value;
             app.colour = app.colour;
         });
 
@@ -181,7 +177,6 @@ class Gui {
         connectFieldSliderSpinbox("bits", (event) => {
             this.levels.value = Math.pow(2, this.bits.value);
             this.levelsSlider.value = this.levels.value;
-            this.bitsSlider.value = this.bits.value;
             app.colour = app.colour;
         });
 
@@ -190,6 +185,7 @@ class Gui {
             let newColour = Colour.clone(app.colour);
             newColour.r = this.red.value;
             app.colour = newColour;
+            app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
 
         this.green.value = app.colour.g;
@@ -197,6 +193,7 @@ class Gui {
             let newColour = Colour.clone(app.colour);
             newColour.g = this.green.value;
             app.colour = newColour;
+            app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
 
         this.blue.value = app.colour.b;
@@ -204,6 +201,7 @@ class Gui {
             let newColour = Colour.clone(app.colour);
             newColour.b = this.blue.value;
             app.colour = newColour;
+            app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
 
         this.alpha.value = app.colour.a;
@@ -211,6 +209,28 @@ class Gui {
             let newColour = Colour.clone(app.colour);
             newColour.a = this.alpha.value;
             app.colour = newColour;
+            app._colourHSL.a = newColour.a / 255;
+        });
+
+        this.hue.value = app._colourHSL.h;
+        connectFieldSliderSpinbox("hue", (event) => {
+            app._colourHSL.h = this.hue.value;
+            let rgba = tinycolor(app._colourHSL).toRgb();
+            app.colour = new Colour(rgba.r, rgba.g, rgba.b, rgba.a * 255);
+        });
+
+        this.saturation.value = app._colourHSL.s;
+        connectFieldSliderSpinbox("saturation", (event) => {
+            app._colourHSL.s = this.saturation.value;
+            let rgba = tinycolor(app._colourHSL).toRgb();
+            app.colour = new Colour(rgba.r, rgba.g, rgba.b, rgba.a * 255);
+        });
+
+        this.lightness.value = app._colourHSL.l;
+        connectFieldSliderSpinbox("lightness", (event) => {
+            app._colourHSL.l = this.lightness.value;
+            let rgba = tinycolor(app._colourHSL).toRgb();
+            app.colour = new Colour(rgba.r, rgba.g, rgba.b, rgba.a * 255);
         });
 
         // Layers panel
@@ -224,7 +244,7 @@ class Gui {
         // Info panel
         this.info.style.position = "fixed";
         this.info.style.bottom = 0;
-        this.info.style.left = 0;
+        this.info.style.right = 0;
 
         this.pixel.style.width = "12ch";
 
