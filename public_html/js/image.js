@@ -68,89 +68,11 @@ class Colour extends Uint8Array {
         this[3] = level(this[3], step);
     }
 
-    toHSLA() {
-        /* Returns the HSV or HSL hue component of this RGBColour. The hue is in the
-           * range [0,360). The parameters are:
-           *
-           * maximum - the maximum of the RGB component values
-           * range   - the range of the RGB component values
-           */
-        function getHue(maximum, range) {
-            // check whether the range is zero
-            if (range === 0) {
-                // set the hue to zero (any hue is acceptable as the colour is grey)
-                return 0;
-            }
-            else {
-                let hue;
-                // determine which of the components has the highest value and set the hue
-                switch (maximum) {
-                    // red has the highest value
-                    case this.r:
-                        hue = (this.g - this.b) / range * 60;
-                        if (hue < 0)
-                            hue += 360;
-                        break;
-                    // green has the highest value
-                    case this.g:
-                        hue = (this.b - this.r) / range * 60 + 120;
-                        break;
-                    // blue has the highest value
-                    case this.b:
-                        hue = (this.r - this.g) / range * 60 + 240;
-                        break;
-
-                }
-                return hue;
-            }
-        }
-        // get the maximum and range of the RGB component values
-        let maximum = Math.max(this.r, this.g, this.b);
-        let range   = maximum - Math.min(this.r, this.g, this.b);
-
-        // determine the lightness in the range [0,1]
-        let l = maximum / 255 - range / 510;
-
-        return {
-            'h' : getHue(maximum, range),
-            's' : (range === 0 ? 0 : range / 2.55 / (l < 0.5 ? l * 2 : 2 - l * 2)),
-            'l' : 100 * l,
-            'a' : this.a
-        };
+    toObject() {
+        return { r: this[0], g: this[1], b: this[2], a: this[3] / 255 };
     }
-    static fromHSLA(hsla) {
-        let colour = new Colour();
-
-        // check whether the saturation is zero
-        if (hsla.s === 0) {
-            colour.r = colour.g = colour.b = hsla.l * 2.55;
-            colour.a = hsla.a;
-        }
-        else {
-            // set some temporary values
-            let p = hsla.l < 50
-                ? hsla.l * (1 + hsla.s / 100)
-                : hsla.l + hsla.s - hsla.l * hsla.s / 100;
-            let q = 2 * hsla.l - p;
-
-            // initialise the RGB components
-            colour.r = (hsla.h + 120) / 60 % 6;
-            colour.g = hsla.h / 60;
-            colour.b = (hsla.h + 240) / 60 % 6;
-            colour.a = hsla.a;
-
-            // loop over the RGB components
-            for (let i = 0; i < 3; ++i) {
-                // set the component to its value in the range [0,100]
-                if (colour[i] < 1) colour[i] = q + (p - q) * colour[i];
-                else if (colour[i] < 3) colour[i] = p;
-                else if (colour[i] < 4) colour[i] = q + (p - q) * (4 - colour[i]);
-                else colour[i] = q;
-                // set the component to its value in the range [0,255]
-                colour[i] *= 2.55;
-            }
-        }
-        return colour;
+    static fromObject(obj) {
+        return new Colour(obj.r, obj.g, obj.b, obj.a * 255);
     }
 
     toFloats() {

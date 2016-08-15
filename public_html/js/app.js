@@ -274,7 +274,7 @@ class Brush {
 
 class Context {
     constructor() {
-        this.strokeSpacing = 4;
+        this.strokeSpacing = 0.5;
         this.brush.width = 16;
         this.brush.height = 16;
         this.brushRatio = 1.0;
@@ -324,8 +324,9 @@ class App {
         this.uvTriStripQuadElement;
         this.uvLineLoopQuadElement;
         this._colour;
+        this._colourHSL;
 
-        this.strokeSpacing = 4;
+        this.strokeSpacing = 0.5;
         this.brush = new Brush();
         this.brushRatio = 1.0;
     }
@@ -345,6 +346,13 @@ class App {
         this.gui.blueSlider.value = this._colour.b;
         this.gui.alpha.value = this._colour.a;
         this.gui.alphaSlider.value = this._colour.a;
+
+        this.gui.hue.value = this._colourHSL.h;
+        this.gui.hueSlider.value = this._colourHSL.h;
+        this.gui.saturation.value = this._colourHSL.s;
+        this.gui.saturationSlider.value = this._colourHSL.s;
+        this.gui.lightness.value = this._colourHSL.l;
+        this.gui.lightnessSlider.value = this._colourHSL.l;
     }
 
     newImage() {
@@ -491,6 +499,7 @@ class App {
     preload() {
         let scripts = [
             "js/lib/gl-matrix.js",
+            "js/lib/tinycolor.js",
             "js/image.js",
             "js/program.js",
             "js/gui.js",
@@ -517,6 +526,8 @@ class App {
 
     initialize() {
         this._colour = new Colour();
+        this._colourHSL = tinycolor(this._colour.toObject()).toHsl();
+
         this.gui = new Gui(this, this.guiHTML, this.container);
         this.canvas = this.gui.canvas;
 

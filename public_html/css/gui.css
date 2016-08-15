@@ -21,9 +21,10 @@ http://www.wtfpl.net/ for more details.
     pointer-events: none;
 }
 #app .panel, #app .panel fieldset {
-    background-color: lightgray;
+    background-color: darkgray;
     border-color: white;
     border-radius: 2px;
+    opacity: 0.9;
 }
 #app .panel {
     overflow-y: scroll;

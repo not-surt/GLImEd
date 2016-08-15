@@ -24,6 +24,8 @@ http://www.wtfpl.net/ for more details.
                 <button id="loadImage">Load</button>
                 <button id="saveImage">Save</button>
                 <br>
+                <output id="filename"></output>
+                <br>
                 <button id="undo">Undo</button>
                 <button id="redo">Redo</button>
                 <br>
@@ -33,7 +35,7 @@ http://www.wtfpl.net/ for more details.
                     <input id="spacing" class="withSlider" type="number" min="0.0" max="16.0" step="0.1">
                     <br>
                     <label for="proportionalSpacing">Proportional</label>
-                    <input id="proportionalSpacing" type="checkbox">
+                    <input id="proportionalSpacing" type="checkbox" checked>
                     <br>
                     <label for="snapCentres">Snap pixel centres</label>
                     <input id="snapCentres" type="checkbox">
@@ -51,6 +53,7 @@ http://www.wtfpl.net/ for more details.
                         <option value="2">Rectangle</option>
                     </select>
                     <br>
+                    <hr>
                     <label for="width">Width</label>
                     <input id="width" class="withSlider" type="number" min="1" max="256">
                     <br>
@@ -58,12 +61,13 @@ http://www.wtfpl.net/ for more details.
                     <input id="height" class="withSlider" type="number" min="1" max="256">
                     <br>
                     <label for="fixedRatio">Fixed Ratio</label>
-                    <input id="fixedRatio" type="checkbox">
+                    <input id="fixedRatio" type="checkbox" checked>
                     <output id="fixedRatioOutput"></output>
                     <br>
                     <label for="angle">Angle</label>
                     <input id="angle" class="withSlider" type="number" min="0.0" max="1.0" step="0.0625">
                     <br>
+                    <hr>
                     <label for="type">Falloff</label>
                     <select id="falloff">
                         <option value="constant">Constant</option>
@@ -84,12 +88,14 @@ http://www.wtfpl.net/ for more details.
                     <label for="colour">Colour</label>
                     <input id="colour" type="color">
                     <br>
+                    <hr>
                     <label for="levels">Levels</label>
                     <input id="levels" class="withSlider" type="number" min="2" max="256">
                     <br>
                     <label for="bits">Bits</label>
                     <input id="bits" class="withSlider" type="number" min="1" max="8">
                     <br>
+                    <hr>
                     <label for="red">Red</label>
                     <input id="red" class="withSlider" type="number" min="0" max="255">
                     <br>
@@ -99,20 +105,19 @@ http://www.wtfpl.net/ for more details.
                     <label for="blue">Blue</label>
                     <input id="blue" class="withSlider" type="number" min="0" max="255">
                     <br>
-                    <!--<label for="hue">Hue</label>
-                    <input id="hue" type="number" min="0" max="255">
-                    <input id="hueSlider" type="range" min="0" max="255">
-                    <br>
-                    <label for="saturation">Saturation</label>
-                    <input id="saturation" type="number" min="0" max="255">
-                    <input id="saturationSlider" type="range" min="0" max="255">
-                    <br>
-                    <label for="lightness">Lightness</label>
-                    <input id="lightness" type="number" min="0" max="255">
-                    <input id="lightnessSlider" type="range" min="0" max="255">
-                    <br>-->
+                    <hr>
                     <label for="alpha">Alpha</label>
                     <input id="alpha" class="withSlider" type="number" min="0" max="255">
+                    <br>
+                    <hr>
+                    <label for="hue">Hue</label>
+                    <input id="hue" class="withSlider" type="number" min="0" max="360" step="1">
+                    <br>
+                    <label for="saturation">Saturation</label>
+                    <input id="saturation" class="withSlider" type="number" min="0.0" max="1.0" step="0.05">
+                    <br>
+                    <label for="lightness">Lightness</label>
+                    <input id="lightness" class="withSlider" type="number" min="0.0" max="1.0" step="0.05">
                     <br>
                 </fieldset>
             </div>
