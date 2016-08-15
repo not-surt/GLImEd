@@ -1,0 +1,190 @@
+<!--
+This program is free software. It comes without any warranty, to
+the extent permitted by applicable law. You can redistribute it
+and/or modify it under the terms of the Do What The Fuck You Want
+To Public License, Version 2, as published by Sam Hocevar. See
+http://www.wtfpl.net/ for more details.
+-->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Shaders</title>
+        <meta charset="UTF-8">
+        <script id="common.h" type="x-shader/x-include">
+            precision mediump int;
+            precision mediump float;
+
+            #define PI 3.14159265358979323846
+        </script>
+        <script id="checker.vert" type="x-shader/x-vertex">
+            #include "common.h"
+
+            attribute vec2 pos;
+
+            uniform mat3 projection;
+            uniform float checkerSize;
+
+            varying vec2 texturePos;
+
+            void main(void) {
+                texturePos = (projection * vec3(pos, 1.0)).xy / vec2(checkerSize, checkerSize);
+                gl_Position = vec4(pos, 0.0, 1.0);
+            }
+        </script>
+        <script id="checker.frag" type="x-shader/x-fragment">
+            #include "common.h"
+
+            varying vec2 texturePos;
+
+            const float base = 7.0 / 16.0;
+            const float offset = 1.0 / 16.0;
+            const float light = base + offset;
+            const float dark = base - offset;
+
+            void main(void) {
+                vec4 colour = (mod(texturePos.x, 1.0) < 0.5) != (mod(texturePos.y, 1.0) < 0.5) ? vec4(light, light, light, 1.0) : vec4(dark, dark, dark, 1.0);
+                gl_FragColor = colour;
+            }
+        </script>
+        <script id="chunk.vert" type="x-shader/x-vertex">
+            #include "common.h"
+
+            attribute vec2 pos;
+
+            uniform mat3 modelView;
+            uniform mat3 projection;
+            uniform float chunkSize;
+
+            varying vec2 texturePos;
+
+            void main(void) {
+                texturePos = pos;
+                gl_Position = vec4(projection * modelView * vec3(pos * chunkSize, 1.0), 1.0);
+            }
+        </script>
+        <script id="chunk.frag" type="x-shader/x-fragment">
+            #include "common.h"
+
+            uniform sampler2D texture;
+            uniform float chunkSize;
+
+            varying vec2 texturePos;
+
+            void main(void) {
+            vec4 texel = texture2D(texture, texturePos);
+                //gl_FragColor = vec4(texel.rgb * texel.a, texel.a);
+                gl_FragColor = texel;
+            }
+        </script>
+        <script id="solid.frag" type="x-shader/x-fragment">
+            #include "common.h"
+
+            uniform vec4 colour;
+
+            void main(void) {
+                gl_FragColor = vec4(colour.rgb * colour.a, colour.a);
+            }
+        </script>
+        <script id="brush.vert" type="x-shader/x-vertex">
+            #include "common.h"
+
+            attribute vec2 pos;
+
+            uniform mat3 brush; // brush to world
+            uniform mat3 projection; // world to image
+            uniform vec2 chunkOffset;
+
+            varying vec2 texturePos;
+
+            void main(void) {
+                texturePos = pos;
+                gl_Position = vec4(projection * (brush * vec3(pos, 1.0) - vec3(chunkOffset, 0.0)), 1.0);
+            }
+        </script>
+        <script id="brush.h" type="x-shader/x-include">
+            #if !defined(_BRUSH_H_)
+            #define _BRUSH_H_
+
+            float _ellipse(vec2 pos) {
+                return min(length(pos), 1.0);
+            }
+
+            float _rectangle(vec2 pos) {
+                return min(max(abs(pos.x), abs(pos.y)), 1.0);
+            }
+
+            float _constant(float value) {
+                return 1.0;
+            }
+
+            float _linear(float value) {
+                return value;
+            }
+
+            float _cosine(float value) {
+                return (1.0 - cos(value * PI)) * 0.5;
+            }
+
+            float _spherical(float value) {
+                return sqrt(value * value);
+            }
+
+            float _bias(float scale, float shift, float value) {
+                return scale * value + shift;
+            }
+
+            float _bias(float bias, float value) {
+                return pow(value, log(bias) / log(0.5));
+            }
+
+            float _gain(float gain, float value) {
+                return value <= 0.5 ? _bias(2.0 * value, 1.0 - gain) / 2.0 : 1.0 - _bias(2.0 - 2.0 * value, 1.0 - gain) / 2.0;
+            }
+
+            float _weight(vec2 pos, float brush, float bias, float gain) {
+                return _gain(gain, _bias(bias, brush));
+            }
+
+            #endif
+        </script>
+        <script id="ellipseBrush.frag" type="x-shader/x-fragment">
+            #include "common.h"
+            #include "brush.h"
+
+            uniform float bias;
+            uniform float gain;
+            uniform vec4 colour;
+
+            varying vec2 texturePos;
+
+            void main(void) {
+                float brush = _ellipse(texturePos);
+                float weight = _weight(texturePos, brush, bias, gain);
+                float alpha = colour.a * (1.0 - weight);
+                gl_FragColor = vec4(colour.rgb * alpha, alpha);
+                //gl_FragColor = vec4(colour.rgb, alpha);
+            }
+        </script>
+        <script id="rectangleBrush.frag" type="x-shader/x-fragment">
+            #include "common.h"
+            #include "brush.h"
+
+            uniform vec4 colour;
+            uniform float bias;
+            uniform float gain;
+
+            varying vec2 texturePos;
+
+            void main(void) {
+                float brush = _rectangle(texturePos);
+                float weight = _weight(texturePos, brush, bias, gain);
+                float alpha = colour.a * (1.0 - weight);
+                gl_FragColor = vec4(colour.rgb * alpha, alpha);
+                //gl_FragColor = vec4(colour.rgb, alpha);
+            }
+        </script>
+    </head>
+</html>

@@ -1,0 +1,176 @@
+<!--
+This program is free software. It comes without any warranty, to
+the extent permitted by applicable law. You can redistribute it
+and/or modify it under the terms of the Do What The Fuck You Want
+To Public License, Version 2, as published by Sam Hocevar. See
+http://www.wtfpl.net/ for more details.
+-->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Gui</title>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <div id="app">
+            <canvas id="canvas" class="canvas" tabIndex="1"></canvas>
+            <div id="tools" class="panel">
+                <button id="fullscreen">Fullscreen</button>
+                <br>
+                <button id="newImage">New</button>
+                <button id="loadImage">Load</button>
+                <button id="saveImage">Save</button>
+                <br>
+                <button id="undo">Undo</button>
+                <button id="redo">Redo</button>
+                <br>
+                <fieldset>
+                    <legend>Stroke</legend>
+                    <label for="spacing">Spacing</label>
+                    <input id="spacing" class="withSlider" type="number" min="0.0" max="16.0" step="0.1">
+                    <br>
+                    <label for="proportionalSpacing">Proportional</label>
+                    <input id="proportionalSpacing" type="checkbox">
+                    <br>
+                    <label for="snapCentres">Snap pixel centres</label>
+                    <input id="snapCentres" type="checkbox">
+                    <br>
+                    <label for="snapCorners">Snap pixel corners</label>
+                    <input id="snapCorners" type="checkbox">
+                    <br>
+                </fieldset>
+                <fieldset>
+                    <legend>Brush</legend>
+                    <label for="type">Type</label>
+                    <select id="type">
+                        <option value="0">Pixel</option>
+                        <option value="1">Ellipse</option>
+                        <option value="2">Rectangle</option>
+                    </select>
+                    <br>
+                    <label for="width">Width</label>
+                    <input id="width" class="withSlider" type="number" min="1" max="256">
+                    <br>
+                    <label for="height">Height</label>
+                    <input id="height" class="withSlider" type="number" min="1" max="256">
+                    <br>
+                    <label for="fixedRatio">Fixed Ratio</label>
+                    <input id="fixedRatio" type="checkbox">
+                    <output id="fixedRatioOutput"></output>
+                    <br>
+                    <label for="angle">Angle</label>
+                    <input id="angle" class="withSlider" type="number" min="0.0" max="1.0" step="0.0625">
+                    <br>
+                    <label for="type">Falloff</label>
+                    <select id="falloff">
+                        <option value="constant">Constant</option>
+                        <option value="linear">Linear</option>
+                        <option value="spherical">Spherical</option>
+                        <option value="cosine">Cosine</option>
+                    </select>
+                    <br>
+                    <label for="bias">Bias</label>
+                    <input id="bias" class="withSlider" type="number" min="0.0" max="1.0" step="0.0625">
+                    <br>
+                    <label for="gain">Gain</label>
+                    <input id="gain" class="withSlider" type="number" min="0.0" max="1.0" step="0.0625">
+                    <br>
+                </fieldset>
+                <fieldset>
+                    <legend>Colour</legend>
+                    <label for="colour">Colour</label>
+                    <input id="colour" type="color">
+                    <br>
+                    <label for="levels">Levels</label>
+                    <input id="levels" class="withSlider" type="number" min="2" max="256">
+                    <br>
+                    <label for="bits">Bits</label>
+                    <input id="bits" class="withSlider" type="number" min="1" max="8">
+                    <br>
+                    <label for="red">Red</label>
+                    <input id="red" class="withSlider" type="number" min="0" max="255">
+                    <br>
+                    <label for="green">Green</label>
+                    <input id="green" class="withSlider" type="number" min="0" max="255">
+                    <br>
+                    <label for="blue">Blue</label>
+                    <input id="blue" class="withSlider" type="number" min="0" max="255">
+                    <br>
+                    <!--<label for="hue">Hue</label>
+                    <input id="hue" type="number" min="0" max="255">
+                    <input id="hueSlider" type="range" min="0" max="255">
+                    <br>
+                    <label for="saturation">Saturation</label>
+                    <input id="saturation" type="number" min="0" max="255">
+                    <input id="saturationSlider" type="range" min="0" max="255">
+                    <br>
+                    <label for="lightness">Lightness</label>
+                    <input id="lightness" type="number" min="0" max="255">
+                    <input id="lightnessSlider" type="range" min="0" max="255">
+                    <br>-->
+                    <label for="alpha">Alpha</label>
+                    <input id="alpha" class="withSlider" type="number" min="0" max="255">
+                    <br>
+                </fieldset>
+            </div>
+            <!--<div id="layers" class="panel">
+                <fieldset>
+                    <legend>Layers</legend>
+                    <button id="addLayer">Add</button>
+                    <button id="deleteLayer">Delete</button>
+                    <button id="duplicateLayer">Duplicate</button>
+                    <br>
+                    <button id="layerUp">Up</button>
+                    <button id="layerDown">Down</button>
+                    <br>
+                    <select id="layer">
+                        <option>Layer1</option>
+                        <option>Layer2</option>
+                        <option>Layer3</option>
+                    </select>
+                </fieldset>
+            </div>-->
+            <div id="info" class="panel">
+                <fieldset>
+                    <legend>Mouse</legend>
+                    <label for="pixel">Pixel</label>
+                    <output id="pixel"></output>
+                    <br>
+                    <label for="chunk">Chunk</label>
+                    <output id="chunk"></output>
+                    <br>
+                    <label for="mouseColour">RGB (Alpha)</label>
+                    <output id="mouseColour"></output>
+                    <br>
+                </fieldset>
+                <fieldset>
+                    <legend>View</legend>
+                    <label for="pan">Pan</label>
+                    <output id="pan"></output>
+                    <br>
+                    <label for="zoom">Zoom</label>
+                    <output id="zoom"></output>
+                    <br>
+                </fieldset>
+                <fieldset>
+                    <legend>Image</legend>
+                    <label for="dimensions">Dimensions</label>
+                    <output id="dimensions"></output>
+                    <br>
+                    <label for="extents">Extents</label>
+                    <output id="extents"></output>
+                    <br>
+                    <label for="chunks">Chunks (Available)</label>
+                    <output id="chunks"></output>
+                    <br>
+                    <label for="memory">Memory (Reserved)</label>
+                    <output id="memory"></output>
+                    <br>
+                </fieldset>
+            </div>
+        </div>
+    </body>
+</html>
