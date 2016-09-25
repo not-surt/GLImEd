@@ -554,6 +554,8 @@ class App {
         this._colour = new Colour();
         this._colourHSL = tinycolor(this._colour.toObject()).toHsl();
 
+        this.brush = new Brush(this);
+
         this.gui = new Gui(this, this.guiHTML, this.container);
         this.canvas = this.gui.canvas;
 
@@ -649,7 +651,6 @@ class App {
                 attribs: ["pos"]
             }
         };
-
         // Get shader sources
         let scriptElements = this.shaderHTML.getElementsByTagName("script");
         let includes = {};
@@ -672,7 +673,7 @@ class App {
                 }
             }
         }
-
+        // Build shader programs
         this.programs = new ShaderProgramManager(this.gl, programInfo, sources, includes);
         console.log("Shader program variants: " + Object.keys(this.programs).length);
 
@@ -692,10 +693,6 @@ class App {
         gl.uniform1f(program.uniforms["chunkSize"], this.image.chunkSize);
         gl.uniform4f(program.uniforms["colour"], 1.0, 1.0, 1.0, 0.125);
         gl.enableVertexAttribArray(program.attribs["pos"]);
-
-        this.brush = new Brush(this);
-
-        this.gui.initialize(this);
 
         this.initialized = true;
         if (this.pendingResizeRequest) this.pendingResizeRequest();

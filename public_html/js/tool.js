@@ -31,9 +31,8 @@ class Brush {
         this.gain = 0.5;
     }
 
-    set type(type) {
-        this._type = type;
-        if (type !== this.Type.PIXEL) {
+    update(app) {
+        if (this._type !== this.Type.PIXEL) {
             let gl = this.app.gl;
 
             let program = this.app.programs["brush" + this.TypeString[this.TypeInverse[this._type]]];
@@ -49,6 +48,11 @@ class Brush {
             this._program = program;
         }
     }
+
+    set type(type) {
+        this._type = type;
+        //update();
+    }
     get type() {
         return this._type;
     }
@@ -59,11 +63,15 @@ class Brush {
 class Context {
     constructor() {
         this.strokeSpacing = 0.5;
-        this.brush.width = 16;
-        this.brush.height = 16;
-        this.brushRatio = 1.0;
-        this.brushAngle = 0.0;
-        this.brush.bias = 0.5;
-        this.brush.gain = 0.5;
+        this.colour
+    }
+}
+
+
+
+class Tool {
+    constructor(app) {
+        this.brush = new Brush(app);
+        this.context = new Context();
     }
 }
