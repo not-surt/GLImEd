@@ -8,7 +8,7 @@ http://www.wtfpl.net/ for more details.
 
 
 
-#app * {
+#app .panel * {
     font-family: sans-serif;
     font-size: small;
 }
@@ -17,8 +17,8 @@ http://www.wtfpl.net/ for more details.
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
 }
-#app .hud {
-    pointer-events: none;
+#app output {
+    display: inline-block;
 }
 #app .panel, #app .panel fieldset {
     background-color: darkgray;
@@ -27,7 +27,7 @@ http://www.wtfpl.net/ for more details.
     opacity: 0.9;
 }
 #app .panel {
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 #app .panel, #app .panel fieldset {
     user-select: none;
@@ -94,6 +94,18 @@ http://www.wtfpl.net/ for more details.
     /*border-color: white;
     color: white;
     background: black;*/
+}
+#app .hud {
+    pointer-events: none;
+    color: white;
+    text-shadow: -2px 0px 2px black, 2px 0px 2px black, 0px -2px 2px black, 0px 2px 2px black;
+    font-family: sans-serif;
+    font-size: medium;
+}
+#app .hud overflow {
+}
+#mouseColour {
+    /*text-shadow: none;*/
 }
 /*
 

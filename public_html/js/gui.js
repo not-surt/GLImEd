@@ -171,13 +171,13 @@ class Gui {
             this.bits.value = Math.ceil(Math.log2(this.levels.value));
             this.bitsSlider.value = this.bits.value;
             app.colour = app.colour;
+            app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
 
         this.bits.value = 8;
         connectFieldSliderSpinbox("bits", (event) => {
             this.levels.value = Math.pow(2, this.bits.value);
-            this.levelsSlider.value = this.levels.value;
-            app.colour = app.colour;
+            levels.dispatchEvent(new Event("change"));
         });
 
         this.red.value = app.colour.r;
@@ -233,6 +233,12 @@ class Gui {
             app.colour = new Colour(rgba.r, rgba.g, rgba.b, rgba.a * 255);
         });
 
+        this.chunks.style.width = "12ch";
+
+        this.dimensions.style.width = "16ch";
+
+        this.extents.style.width = "24ch";
+
         // Layers panel
         //this.layers.style.position = "fixed";
         //this.layers.style.top = 0;
@@ -241,26 +247,20 @@ class Gui {
         //this.layer.style.width = "100%";
         //this.layer.size = 8;
 
-        // Info panel
-        this.info.style.position = "fixed";
-        this.info.style.bottom = 0;
-        this.info.style.right = 0;
+        // HUD
+        this.hud.style.position = "fixed";
+        this.hud.style.top = 0;
+        this.hud.style.right = 0;
 
         this.pixel.style.width = "12ch";
 
         this.chunk.style.width = "12ch";
 
-        this.pan.style.width = "12ch";
+        this.mouseColour.style.width = "18ch";
+
+        this.pan.style.width = "18ch";
 
         this.zoom.style.width = "12ch";
-
-        this.mouseColour.style.width = "16ch";
-
-        this.chunks.style.width = "12ch";
-
-        this.dimensions.style.width = "16ch";
-
-        this.extents.style.width = "24ch";
     }
 
     update(app) {
@@ -269,9 +269,11 @@ class Gui {
             this.pixel.innerHTML = Math.floor(app.mousePos[0]) + "," + Math.floor(app.mousePos[1]);
             this.chunk.innerHTML = chunk[0] + "," + chunk[1];
             let colour = app.image.getPixel(app.mousePos);
+            colour.unpremultiply();
             this.mouseColour.innerHTML = colour.r + "," + colour.g + "," + colour.b + " (" + colour.a + ")";
-            this.mouseColour.style.backgroundColor = colour.toString();
-            this.mouseColour.style.color = (colour.r + colour.g + colour.b) / 3 > 127 ? new Colour(0, 0, 0) : new Colour(255, 255, 255);
+            //this.mouseColour.style.backgroundColor = colour.toString();
+            this.mouseColour.style.backgroundColor = tinycolor(colour.toObject()).toRgbString();
+            //this.mouseColour.style.color = (colour.r + colour.g + colour.b) / 3 > 127 ? new Colour(0, 0, 0) : new Colour(255, 255, 255);
         } else {
             this.pixel.innerHTML = this.chunk.innerHTML = this.mouseColour.innerHTML = "&hellip;";
             this.mouseColour.style.backgroundColor = "";

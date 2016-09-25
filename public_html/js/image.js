@@ -57,6 +57,19 @@ class Colour extends Uint8Array {
         this[3] = value;
     }
 
+    premultiply() {
+        let alpha = this[3] / 255;
+        this[0] *= alpha;
+        this[1] *= alpha;
+        this[2] *= alpha;
+    }
+    unpremultiply() {
+        let alpha = this[3] / 255;
+        this[0] /= alpha;
+        this[1] /= alpha;
+        this[2] /= alpha;
+    }
+
     constrainLevels(levels) {
         function level(value, step) {
             return Math.round(value / step) * step;
@@ -160,6 +173,35 @@ class Palette extends GLImage {
     }
     setIndex(index, colour) {
         this.setPixel([index, 0], colour);
+    }
+}
+
+
+
+class SubImage {
+    constructor(gl, image, pos, size) {
+        this._image = image;
+        this._pos = pos.slice(0, 2);
+        this._size = size.slice(0, 2);
+    }
+
+    get image() { return this._image; }
+    get pos() { return this._pos; }
+    get size() { return this._size; }
+
+    beforeRenderTo(gl) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this._image.framebufferId);
+        gl.enable(gl.SCISSOR_TEST);
+        gl.viewport(pos[0], pos[1], size[0], size[1]);
+        gl.scissors(pos[0], pos[1], size[0], size[1]);
+    }
+}
+
+
+
+class SimpleImage extends GLImage {
+    constructor(gl, width, height) {
+        super(gl, width, height);
     }
 }
 

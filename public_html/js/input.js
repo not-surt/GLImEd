@@ -31,6 +31,8 @@ class Input {
 
         this.keyListener = this.keyHandler.bind(this);
         this.app.canvas.addEventListener("keydown", this.keyListener);
+        this.touchListener = this.touchHandler.bind(this);
+        this.app.canvas.addEventListener("touchstart", this.touchListener);
         this.mouseListener = this.mouseHandler.bind(this);
         this.app.canvas.addEventListener("mousedown", this.mouseListener);
         this.app.canvas.addEventListener("mouseenter", this.mouseListener);
@@ -62,6 +64,26 @@ class Input {
         }
         else if (event.type === "keyup" && --this.keydownCount === 0) {
             document.removeEventListener("keyup", this.keyListener);
+        }
+    }
+
+    touchHandler(event) {
+        event.preventDefault();
+        if (event.type === "touchstart") {
+            this.app.canvas.addEventListener("touchend", this.touchListener);
+            this.app.canvas.addEventListener("touchcancel", this.touchListener);
+            this.app.canvas.addEventListener("touchmove", this.touchListener);
+            this.app.canvas.dispatchEvent(new MouseEvent("mousedown", {"button": this.MouseButtons.LEFT}));
+        }
+        else if (event.type === "touchend" || event.type === "touchcancel") {
+            document.dispatchEvent(new MouseEvent("mouseup", {"button": this.MouseButtons.LEFT}));
+            this.app.canvas.removeEventListener("touchmove", this.touchListener);
+            this.app.canvas.removeEventListener("touchcancel", this.touchListener);
+            this.app.canvas.removeEventListener("touchend", this.touchListener);
+        }
+        else if (event.type === "touchmove") {
+            pr("touchmove");
+            this.app.canvas.dispatchEvent(new MouseEvent("mousemove", { "clientX": event.clientX, "clientY": event.clientY, "movementX": event.movementX, "movementY": event.movementY }));
         }
     }
 

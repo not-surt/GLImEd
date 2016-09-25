@@ -257,8 +257,8 @@ class Brush {
         };
         this.TypeInverse = inverseObject(this.Type);
         this.Program = {
-            ELLIPSE: "ellipseBrush",
-            RECTANGLE: "rectangleBrush"
+            ELLIPSE: "brushEllipse",
+            RECTANGLE: "brushRectangle"
         };
 
         this.type = this.Type.ELLIPSE;
@@ -394,6 +394,17 @@ class App {
             if (event.target.files.length > 0) {
                 var image = new Image();
                 let url = URL.createObjectURL(event.target.files[0]);
+
+                var reader = new FileReader();
+                reader.addEventListener("load", () => {
+                    pr(reader.result);
+                    var data = new Png(reader.result);
+                    pr(data);
+                    pr(data.type);
+                    pr(data.indexedPixels);
+                });
+                reader.readAsArrayBuffer(event.target.files[0]);
+
                 image.addEventListener("load", (event) => {
                     this.image = this.chunkImage(image);
                     this.chunkCache = this.image.chunkCache;
@@ -500,6 +511,9 @@ class App {
         let scripts = [
             "js/lib/gl-matrix.js",
             "js/lib/tinycolor.js",
+            "js/lib/omggif.js",
+            "js/lib/pnghxjs.js",
+            "js/lib/pako.js",
             "js/image.js",
             "js/program.js",
             "js/gui.js",
@@ -516,34 +530,34 @@ class App {
         let preloadsRemaining = preloads.length;
         let nextFunc = this.initialize.bind(this);
         for (let [loadFunc, url, preloadChainFunc] of preloads) {
-            let caputredChainFunc = preloadChainFunc;
+            let capturedChainFunc = preloadChainFunc;
             loadFunc(url, (result) => {
-                if (caputredChainFunc) caputredChainFunc(result);
+                if (capturedChainFunc) capturedChainFunc(result);
                 if (--preloadsRemaining === 0) requestAnimationFrame(nextFunc);
             });
         }
     }
 
-    initialize() {
-        this._colour = new Colour();
-        this._colourHSL = tinycolor(this._colour.toObject()).toHsl();
+    initializeWebGL() {
+        let extensions;
 
-        this.gui = new Gui(this, this.guiHTML, this.container);
-        this.canvas = this.gui.canvas;
-
-        try {
-            this.gl = this.canvas.getContext("webgl", {alpha: false, antialias: false, depth: false, preserveDrawingBuffer: false, stencil: false});
-        } catch (e) {
-            console.log("Failure getting context!");
+        // Get context
+        let contextParams = {alpha: false, antialias: false, depth: false, preserveDrawingBuffer: false, stencil: false};
+        // Try to get WebGL 2 context
+        if ((this.gl = this.canvas.getContext("webgl2", contextParams))) extensions = [];
+        // Fallback to WebGL 1 context plus extensions
+        else if ((this.gl = this.canvas.getContext("webgl", contextParams)))
+            extensions = [
+                ["ANGLE_instanced_arrays", "ANGLE", ["drawArraysInstanced", "drawElementsInstanced", "vertexAttribDivisor"]],
+                ["OES_vertex_array_object", "OES", ["createVertexArray", "deleteVertexArray", "isVertexArray", "bindVertexArray"]],
+                ["OES_element_index_uint"]
+            ];
+        else {
+            console.log("Failure getting WebGL context!");
             return false;
         }
 
-        //pr(this.gl.getSupportedExtensions());///////////////////
-        let extensions = [
-            ["ANGLE_instanced_arrays", "ANGLE", ["drawArraysInstanced", "drawElementsInstanced", "vertexAttribDivisor"]],
-            ["OES_vertex_array_object", "OES", ["createVertexArray", "deleteVertexArray", "isVertexArray", "bindVertexArray"]],
-            ["OES_element_index_uint"]
-        ];
+        // Attach extensions
         let missingExtensions = [];
         for (let [name, suffix, funcs] of extensions) {
             let extension = this.gl.getExtension(name);
@@ -556,9 +570,21 @@ class App {
             }
         }
         if (missingExtensions.length > 0) {
-            console.log("Failure getting extensions! " + missingExtensions.join(", "));
+            console.log("Failure getting WebGL extensions! " + missingExtensions.join(", "));
             return false;
         }
+
+        return true;
+    }
+
+    initialize() {
+        this._colour = new Colour();
+        this._colourHSL = tinycolor(this._colour.toObject()).toHsl();
+
+        this.gui = new Gui(this, this.guiHTML, this.container);
+        this.canvas = this.gui.canvas;
+
+        if (!this.initializeWebGL()) return false;
 
         this.camera = new Camera();
 
@@ -644,8 +670,8 @@ class App {
                 uniforms: ["modelView", "projection", "chunkSize", "colour"],
                 attribs: ["pos"]
             },
-            "ellipseBrush": {
-                shaders: ["brush.vert", "ellipseBrush.frag"],
+            /*"ellipseBrush": {
+                shaders: ["brush.vert", ["ellipseBrush.frag", [["Ellipse", "Rectangle"]]]],
                 uniforms: ["brush", "projection", "chunkOffset", "colour", "bias", "gain"],
                 attribs: ["pos"]
             },
@@ -653,9 +679,15 @@ class App {
                 shaders: ["brush.vert", "rectangleBrush.frag"],
                 uniforms: ["brush", "projection", "chunkOffset", "colour", "bias", "gain"],
                 attribs: ["pos"]
+            },*/
+            "brush": {
+                shaders: ["brush.vert", ["brush.frag", [["Ellipse", "Rectangle"]]]],
+                uniforms: ["brush", "projection", "chunkOffset", "colour", "bias", "gain"],
+                attribs: ["pos"]
             }
         };
         this.programs = new ShaderProgramManager(this.gl, programInfo, this.shaderHTML);
+        console.log("Shader program variants: " + Object.keys(this.programs).length);
 
         let program;
 
@@ -674,11 +706,11 @@ class App {
         gl.uniform4f(program.uniforms["colour"], 1.0, 1.0, 1.0, 0.125);
         gl.enableVertexAttribArray(program.attribs["pos"]);
 
-        program = this.programs["ellipseBrush"];
+        program = this.programs["brushEllipse"];
         gl.useProgram(program.id);
         gl.enableVertexAttribArray(program.attribs["pos"]);
 
-        program = this.programs["rectangleBrush"];
+        program = this.programs["brushRectangle"];
         gl.useProgram(program.id);
         gl.enableVertexAttribArray(program.attribs["pos"]);
 
@@ -737,7 +769,7 @@ class App {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.uvVertBuffer);
         gl.vertexAttribPointer(program.attribs["pos"], 2, gl.FLOAT, false, 0, 0);
 
-        program = this.programs["ellipseBrush"];
+        program = this.programs["brushEllipse"];
         gl.useProgram(program.id);
         gl.uniform4fv(program.uniforms["colour"], this._colour.toFloats());
         gl.uniform1f(program.uniforms["bias"], this.brush.bias);
@@ -747,7 +779,7 @@ class App {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.uvVertBuffer);
         gl.vertexAttribPointer(program.attribs["pos"], 2, gl.FLOAT, false, 0, 0);
 
-        program = this.programs["rectangleBrush"];
+        program = this.programs["brushRectangle"];
         gl.useProgram(program.id);
         gl.uniform4fv(program.uniforms["colour"], this._colour.toFloats());
         gl.uniform1f(program.uniforms["bias"], this.brush.bias);
@@ -956,10 +988,11 @@ class App {
     }
     pixel(pos, colour) {
         let newColour = Colour.clone(this.image.getPixel(pos));
+        //newColour.premultiply();
         let alpha = 1.0 - colour.a / 255;
         newColour.r = colour.r + newColour.r * alpha;
-        newColour.b = colour.b + newColour.r * alpha;
-        newColour.g = colour.g + newColour.r * alpha;
+        newColour.g = colour.g + newColour.g * alpha;
+        newColour.b = colour.b + newColour.b * alpha;
         newColour.a = colour.a + newColour.a * alpha;
         this.image.setPixel(pos, newColour);
     }
@@ -981,9 +1014,8 @@ class App {
     }
     pick(pos) {
         this.colour = this.image.getPixel(pos);
-        this.colour.r /= this.colour.a / 255;
-        this.colour.g /= this.colour.a / 255;
-        this.colour.b /= this.colour.a / 255;
+        this.colour.unpremultiply();
+        this._colourHSL = tinycolor(this.colour).toHsl();
     }
     pan(delta) {
         this.camera.move(delta);

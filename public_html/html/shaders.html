@@ -186,5 +186,28 @@ http://www.wtfpl.net/ for more details.
                 //gl_FragColor = vec4(colour.rgb, alpha);
             }
         </script>
+        <script id="brush.frag" type="x-shader/x-fragment">
+            //#define Ellipse
+            #include "common.h"
+            #include "brush.h"
+
+            uniform float bias;
+            uniform float gain;
+            uniform vec4 colour;
+
+            varying vec2 texturePos;
+
+            void main(void) {
+            #if defined(Ellipse)
+                float brush = _ellipse(texturePos);
+            #elif defined(Rectangle)
+                float brush = _rectangle(texturePos);
+            #endif
+                float weight = _weight(texturePos, brush, bias, gain);
+                float alpha = colour.a * (1.0 - weight);
+                gl_FragColor = vec4(colour.rgb * alpha, alpha);
+                //gl_FragColor = vec4(colour.rgb, alpha);
+            }
+        </script>
     </head>
 </html>

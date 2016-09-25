@@ -120,6 +120,21 @@ http://www.wtfpl.net/ for more details.
                     <input id="lightness" class="withSlider" type="number" min="0.0" max="1.0" step="0.05">
                     <br>
                 </fieldset>
+                <fieldset>
+                    <legend>Info</legend>
+                    <label for="dimensions">Dimensions</label>
+                    <output id="dimensions"></output>
+                    <br>
+                    <label for="extents">Extents</label>
+                    <output id="extents"></output>
+                    <br>
+                    <label for="chunks">Chunks (Available)</label>
+                    <output id="chunks"></output>
+                    <br>
+                    <label for="memory">Memory (Reserved)</label>
+                    <output id="memory"></output>
+                    <br>
+                </fieldset>
             </div>
             <!--<div id="layers" class="panel">
                 <fieldset>
@@ -138,43 +153,21 @@ http://www.wtfpl.net/ for more details.
                     </select>
                 </fieldset>
             </div>-->
-            <div id="info" class="panel">
-                <fieldset>
-                    <legend>Mouse</legend>
-                    <label for="pixel">Pixel</label>
-                    <output id="pixel"></output>
-                    <br>
-                    <label for="chunk">Chunk</label>
-                    <output id="chunk"></output>
-                    <br>
-                    <label for="mouseColour">RGB (Alpha)</label>
-                    <output id="mouseColour"></output>
-                    <br>
-                </fieldset>
-                <fieldset>
-                    <legend>View</legend>
-                    <label for="pan">Pan</label>
-                    <output id="pan"></output>
-                    <br>
-                    <label for="zoom">Zoom</label>
-                    <output id="zoom"></output>
-                    <br>
-                </fieldset>
-                <fieldset>
-                    <legend>Image</legend>
-                    <label for="dimensions">Dimensions</label>
-                    <output id="dimensions"></output>
-                    <br>
-                    <label for="extents">Extents</label>
-                    <output id="extents"></output>
-                    <br>
-                    <label for="chunks">Chunks (Available)</label>
-                    <output id="chunks"></output>
-                    <br>
-                    <label for="memory">Memory (Reserved)</label>
-                    <output id="memory"></output>
-                    <br>
-                </fieldset>
+            <div id="hud" class="hud">
+                <label for="pixel">Pixel</label>
+                <output id="pixel"></output>
+                &emsp;
+                <label for="chunk">Chunk</label>
+                <output id="chunk"></output>
+                &emsp;
+                <label for="mouseColour">RGB (A)</label>
+                <output id="mouseColour"></output>
+                &emsp;
+                <label for="pan">Pan</label>
+                <output id="pan"></output>
+                &emsp;
+                <label for="zoom">Zoom</label>
+                <output id="zoom"></output>
             </div>
         </div>
     </body>
