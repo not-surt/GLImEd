@@ -13,8 +13,8 @@ http://www.wtfpl.net/ for more details.
 
 
 class ShaderProgramManager {
-    constructor(gl, programInfo = null, parentNode = document) {
-        if (programInfo) ShaderProgramManager.addPrograms(gl, programInfo, this, parentNode);
+    constructor(gl, programInfo = null, sources = {}, includes = {}) {
+        if (programInfo) ShaderProgramManager.addPrograms(gl, programInfo, this, sources, includes);
     }
 
     static variantList(variations) {
@@ -33,16 +33,6 @@ class ShaderProgramManager {
             }
         }
         return variants;
-    }
-
-    static getText(element) {
-        let text = "";
-        for (let node = element.firstChild; node; node = node.nextSibling) {
-            if (node.nodeType === node.TEXT_NODE) {
-                text += node.textContent;
-            }
-        }
-        return text;
     }
 
     static preprocessSrc(src, includes = {}) {
@@ -86,7 +76,7 @@ class ShaderProgramManager {
         else return programObject;
     }
 
-    static addPrograms(gl, programInfo, programManager, parentNode) {
+    static addPrograms(gl, programInfo, programManager, sources, includes) {
         class ShaderVariant {
             constructor(shaderName, defines) {
                 this.shaderName = shaderName;
@@ -128,28 +118,7 @@ class ShaderProgramManager {
             }
         }
 
-        // Get sources
-        let scriptElements = parentNode.getElementsByTagName("script");
-        let includes = {};
-        let sources = {};
-        for (let i = 0; i < scriptElements.length; ++i) {
-            let element = scriptElements[i];
-            let shaderName = element.id;
-            let type = {
-                "x-shader/x-vertex": gl.VERTEX_SHADER,
-                "x-shader/x-fragment": gl.FRAGMENT_SHADER,
-                "x-shader/x-include": "include"
-            }[element.type];
-            if (typeof type !== "undefined" && !(type !== "include" && typeof shaderVariants[shaderName] === "undefined")) {
-                let src = this.getText(element);
-                if (type === "include") {
-                    includes[shaderName] = src;
-                }
-                else {
-                    sources[shaderName] = [src, type];
-                }
-            }
-        }
+        // Check sources
         for (let shaderName in shaderVariants) {
             if (typeof sources[shaderName] === "undefined") console.log("Shader source not found: " + shaderName);
         }
@@ -212,7 +181,6 @@ class ShaderProgramManager {
                         let attribName = info.attribs[j];
                         program.attribs[attribName] = gl.getAttribLocation(program.id, attribName);
                     }
-
                     programManager[programVariantName] = program;
                 }
             }

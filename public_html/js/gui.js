@@ -123,50 +123,45 @@ class Gui {
             this.spacing.dispatchEvent(new Event("change"));
         });
 
-        let brush = app.brush;
-
-        this.type.value = brush.type;
         this.type.addEventListener("change", (event) => {
-            brush.type = parseInt(this.type.value);
+            app.brush.type = parseInt(this.type.value);
         });
 
         connectFieldSliderSpinbox("width", (event) => {
             if (this.fixedRatio.checked) {
-                brush.height = this.width.value / app.brushRatio;
-                this.height.value = brush.height;
-                this.heightSlider.value = brush.height;
+                app.brush.height = this.width.value / app.brushRatio;
+                this.height.value = app.brush.height;
+                this.heightSlider.value = app.brush.height;
             }
             else {
                 app.brushRatio = this.width.value / this.height.value;
                 this.fixedRatioOutput.value = app.brushRatio.toFixed(3);
             }
-        }, brush);
+        }, app.brush);
         connectFieldSliderSpinbox("height", (event) => {
             if (this.fixedRatio.checked) {
-                brush.width = this.height.value * app.brushRatio;
-                this.width.value = brush.width;
-                this.widthSlider.value = brush.width;
+                app.brush.width = this.height.value * app.brushRatio;
+                this.width.value = app.brush.width;
+                this.widthSlider.value = app.brush.width;
             }
             else {
                 app.brushRatio = this.width.value / this.height.value;
                 this.fixedRatioOutput.value = app.brushRatio.toFixed(3);
             }
-        }, brush);
+        }, app.brush);
         this.fixedRatioOutput.value = app.brushRatio.toFixed(3);
 
-        connectFieldSliderSpinbox("angle", null, brush);
+        connectFieldSliderSpinbox("angle", null, app.brush);
 
-        connectFieldSliderSpinbox("bias", null, brush);
-        connectFieldSliderSpinbox("gain", null, brush);
+        connectFieldSliderSpinbox("bias", null, app.brush);
+        connectFieldSliderSpinbox("gain", null, app.brush);
 
-        this.colour.value = app.colour;
         this.colour.addEventListener("change", (event) => {
             let newColour = Colour.fromString(this.colour.value);
             newColour.a = app.colour.a;
             app.colour = newColour;
         });
 
-        this.levels.value = 256;
         connectFieldSliderSpinbox("levels", (event) => {
             this.bits.value = Math.ceil(Math.log2(this.levels.value));
             this.bitsSlider.value = this.bits.value;
@@ -174,13 +169,11 @@ class Gui {
             app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
 
-        this.bits.value = 8;
         connectFieldSliderSpinbox("bits", (event) => {
             this.levels.value = Math.pow(2, this.bits.value);
             levels.dispatchEvent(new Event("change"));
         });
 
-        this.red.value = app.colour.r;
         connectFieldSliderSpinbox("red", (event) => {
             let newColour = Colour.clone(app.colour);
             newColour.r = this.red.value;
@@ -188,7 +181,6 @@ class Gui {
             app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
 
-        this.green.value = app.colour.g;
         connectFieldSliderSpinbox("green", (event) => {
             let newColour = Colour.clone(app.colour);
             newColour.g = this.green.value;
@@ -196,7 +188,6 @@ class Gui {
             app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
 
-        this.blue.value = app.colour.b;
         connectFieldSliderSpinbox("blue", (event) => {
             let newColour = Colour.clone(app.colour);
             newColour.b = this.blue.value;
@@ -204,7 +195,6 @@ class Gui {
             app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
 
-        this.alpha.value = app.colour.a;
         connectFieldSliderSpinbox("alpha", (event) => {
             let newColour = Colour.clone(app.colour);
             newColour.a = this.alpha.value;
@@ -212,21 +202,18 @@ class Gui {
             app._colourHSL.a = newColour.a / 255;
         });
 
-        this.hue.value = app._colourHSL.h;
         connectFieldSliderSpinbox("hue", (event) => {
             app._colourHSL.h = this.hue.value;
             let rgba = tinycolor(app._colourHSL).toRgb();
             app.colour = new Colour(rgba.r, rgba.g, rgba.b, rgba.a * 255);
         });
 
-        this.saturation.value = app._colourHSL.s;
         connectFieldSliderSpinbox("saturation", (event) => {
             app._colourHSL.s = this.saturation.value;
             let rgba = tinycolor(app._colourHSL).toRgb();
             app.colour = new Colour(rgba.r, rgba.g, rgba.b, rgba.a * 255);
         });
 
-        this.lightness.value = app._colourHSL.l;
         connectFieldSliderSpinbox("lightness", (event) => {
             app._colourHSL.l = this.lightness.value;
             let rgba = tinycolor(app._colourHSL).toRgb();
@@ -261,6 +248,20 @@ class Gui {
         this.pan.style.width = "18ch";
 
         this.zoom.style.width = "12ch";
+    }
+
+    initialize(app) {
+        this.type.value = app.brush.type;
+        this.colour.value = app.colour;
+        this.levels.value = 256;
+        this.bits.value = 8;
+        this.red.value = app.colour.r;
+        this.green.value = app.colour.g;
+        this.blue.value = app.colour.b;
+        this.alpha.value = app.colour.a;
+        this.hue.value = app._colourHSL.h;
+        this.saturation.value = app._colourHSL.s;
+        this.lightness.value = app._colourHSL.l;
     }
 
     update(app) {

@@ -108,14 +108,6 @@ http://www.wtfpl.net/ for more details.
             #if !defined(_BRUSH_H_)
             #define _BRUSH_H_
 
-            float _ellipse(vec2 pos) {
-                return min(length(pos), 1.0);
-            }
-
-            float _rectangle(vec2 pos) {
-                return min(max(abs(pos.x), abs(pos.y)), 1.0);
-            }
-
             float _constant(float value) {
                 return 1.0;
             }
@@ -150,44 +142,7 @@ http://www.wtfpl.net/ for more details.
 
             #endif
         </script>
-        <script id="ellipseBrush.frag" type="x-shader/x-fragment">
-            #include "common.h"
-            #include "brush.h"
-
-            uniform float bias;
-            uniform float gain;
-            uniform vec4 colour;
-
-            varying vec2 texturePos;
-
-            void main(void) {
-                float brush = _ellipse(texturePos);
-                float weight = _weight(texturePos, brush, bias, gain);
-                float alpha = colour.a * (1.0 - weight);
-                gl_FragColor = vec4(colour.rgb * alpha, alpha);
-                //gl_FragColor = vec4(colour.rgb, alpha);
-            }
-        </script>
-        <script id="rectangleBrush.frag" type="x-shader/x-fragment">
-            #include "common.h"
-            #include "brush.h"
-
-            uniform vec4 colour;
-            uniform float bias;
-            uniform float gain;
-
-            varying vec2 texturePos;
-
-            void main(void) {
-                float brush = _rectangle(texturePos);
-                float weight = _weight(texturePos, brush, bias, gain);
-                float alpha = colour.a * (1.0 - weight);
-                gl_FragColor = vec4(colour.rgb * alpha, alpha);
-                //gl_FragColor = vec4(colour.rgb, alpha);
-            }
-        </script>
         <script id="brush.frag" type="x-shader/x-fragment">
-            //#define Ellipse
             #include "common.h"
             #include "brush.h"
 
@@ -198,10 +153,11 @@ http://www.wtfpl.net/ for more details.
             varying vec2 texturePos;
 
             void main(void) {
+                float brush;
             #if defined(Ellipse)
-                float brush = _ellipse(texturePos);
+                brush = min(length(texturePos), 1.0);
             #elif defined(Rectangle)
-                float brush = _rectangle(texturePos);
+                brush = min(max(abs(texturePos.x), abs(texturePos.y)), 1.0);
             #endif
                 float weight = _weight(texturePos, brush, bias, gain);
                 float alpha = colour.a * (1.0 - weight);

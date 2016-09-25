@@ -80,6 +80,16 @@ function loadScript(url, callback) {
     });
 }
 
+function elementText(element) {
+    let text = "";
+    for (let node = element.firstChild; node; node = node.nextSibling) {
+        if (node.nodeType === node.TEXT_NODE) {
+            text += node.textContent;
+        }
+    }
+    return text;
+}
+
 function inverseObject(object) {
     let newObject = {};
     for (let property in object) {
@@ -248,44 +258,6 @@ class Painter {
 
 
 
-class Brush {
-    constructor() {
-        this.Type = {
-            PIXEL: 0,
-            ELLIPSE: 1,
-            RECTANGLE: 2
-        };
-        this.TypeInverse = inverseObject(this.Type);
-        this.Program = {
-            ELLIPSE: "brushEllipse",
-            RECTANGLE: "brushRectangle"
-        };
-
-        this.type = this.Type.ELLIPSE;
-        this.width = 16;
-        this.height = 16;
-        this.angle = 0.0;
-        this.bias = 0.5;
-        this.gain = 0.5;
-    }
-}
-
-
-
-class Context {
-    constructor() {
-        this.strokeSpacing = 0.5;
-        this.brush.width = 16;
-        this.brush.height = 16;
-        this.brushRatio = 1.0;
-        this.brushAngle = 0.0;
-        this.brush.bias = 0.5;
-        this.brush.gain = 0.5;
-    }
-}
-
-
-
 class App {
     constructor(container) {
         this.SCALE = 1;
@@ -327,7 +299,7 @@ class App {
         this._colourHSL;
 
         this.strokeSpacing = 0.5;
-        this.brush = new Brush();
+        this.brush;
         this.brushRatio = 1.0;
     }
 
@@ -516,6 +488,7 @@ class App {
             "js/lib/pako.js",
             "js/image.js",
             "js/program.js",
+            "js/tool.js",
             "js/gui.js",
             "js/input.js"
         ];
@@ -670,23 +643,37 @@ class App {
                 uniforms: ["modelView", "projection", "chunkSize", "colour"],
                 attribs: ["pos"]
             },
-            /*"ellipseBrush": {
-                shaders: ["brush.vert", ["ellipseBrush.frag", [["Ellipse", "Rectangle"]]]],
-                uniforms: ["brush", "projection", "chunkOffset", "colour", "bias", "gain"],
-                attribs: ["pos"]
-            },
-            "rectangleBrush": {
-                shaders: ["brush.vert", "rectangleBrush.frag"],
-                uniforms: ["brush", "projection", "chunkOffset", "colour", "bias", "gain"],
-                attribs: ["pos"]
-            },*/
             "brush": {
                 shaders: ["brush.vert", ["brush.frag", [["Ellipse", "Rectangle"]]]],
                 uniforms: ["brush", "projection", "chunkOffset", "colour", "bias", "gain"],
                 attribs: ["pos"]
             }
         };
-        this.programs = new ShaderProgramManager(this.gl, programInfo, this.shaderHTML);
+
+        // Get shader sources
+        let scriptElements = this.shaderHTML.getElementsByTagName("script");
+        let includes = {};
+        let sources = {};
+        for (let i = 0; i < scriptElements.length; ++i) {
+            let element = scriptElements[i];
+            let shaderName = element.id;
+            let type = {
+                "x-shader/x-vertex": gl.VERTEX_SHADER,
+                "x-shader/x-fragment": gl.FRAGMENT_SHADER,
+                "x-shader/x-include": "include"
+            }[element.type];
+            if (typeof type !== "undefined") {
+                let src = elementText(element);
+                if (type === "include") {
+                    includes[shaderName] = src;
+                }
+                else {
+                    sources[shaderName] = [src, type];
+                }
+            }
+        }
+
+        this.programs = new ShaderProgramManager(this.gl, programInfo, sources, includes);
         console.log("Shader program variants: " + Object.keys(this.programs).length);
 
         let program;
@@ -706,13 +693,9 @@ class App {
         gl.uniform4f(program.uniforms["colour"], 1.0, 1.0, 1.0, 0.125);
         gl.enableVertexAttribArray(program.attribs["pos"]);
 
-        program = this.programs["brushEllipse"];
-        gl.useProgram(program.id);
-        gl.enableVertexAttribArray(program.attribs["pos"]);
+        this.brush = new Brush(this);
 
-        program = this.programs["brushRectangle"];
-        gl.useProgram(program.id);
-        gl.enableVertexAttribArray(program.attribs["pos"]);
+        this.gui.initialize(this);
 
         this.initialized = true;
         if (this.pendingResizeRequest) this.pendingResizeRequest();
@@ -765,26 +748,6 @@ class App {
 
         program = this.programs["solid"];
         gl.useProgram(program.id);
-        gl.uniformMatrix3fv(program.uniforms["projection"], false, this.glMatrix);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvVertBuffer);
-        gl.vertexAttribPointer(program.attribs["pos"], 2, gl.FLOAT, false, 0, 0);
-
-        program = this.programs["brushEllipse"];
-        gl.useProgram(program.id);
-        gl.uniform4fv(program.uniforms["colour"], this._colour.toFloats());
-        gl.uniform1f(program.uniforms["bias"], this.brush.bias);
-        gl.uniform1f(program.uniforms["gain"], this.brush.gain);
-        gl.uniform2f(program.uniforms["chunkOffset"], 0.0, 0.0);
-        gl.uniformMatrix3fv(program.uniforms["projection"], false, this.glMatrix);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvVertBuffer);
-        gl.vertexAttribPointer(program.attribs["pos"], 2, gl.FLOAT, false, 0, 0);
-
-        program = this.programs["brushRectangle"];
-        gl.useProgram(program.id);
-        gl.uniform4fv(program.uniforms["colour"], this._colour.toFloats());
-        gl.uniform1f(program.uniforms["bias"], this.brush.bias);
-        gl.uniform1f(program.uniforms["gain"], this.brush.gain);
-        gl.uniform2f(program.uniforms["chunkOffset"], 0.0, 0.0);
         gl.uniformMatrix3fv(program.uniforms["projection"], false, this.glMatrix);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.uvVertBuffer);
         gl.vertexAttribPointer(program.attribs["pos"], 2, gl.FLOAT, false, 0, 0);
@@ -919,7 +882,8 @@ class App {
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-        let program = this.programs[this.brush.Program[this.brush.TypeInverse[this.brush.type]]];
+        let program = this.programs["brush" + this.brush.TypeString[this.brush.TypeInverse[this.brush.type]]];
+
         gl.useProgram(program.id);
         gl.uniform4fv(program.uniforms["colour"], colour.toFloats());
         gl.uniform1f(program.uniforms["bias"], this.brush.bias);
