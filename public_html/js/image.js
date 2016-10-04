@@ -114,11 +114,13 @@ class GLTexture {
     constructor(gl, width, height, data = null) {
         this.gl = gl;
 
+        this.width = width;
+        this.height = height;
+
         // Build texture
         this.textureId = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, this.textureId);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -145,6 +147,16 @@ class GLImage extends GLTexture {
         this.framebufferId = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebufferId);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.textureId, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+
+    clear() {
+        let gl = this.gl;
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebufferId);
+        gl.viewport(0, 0, this.width, this.height);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
@@ -241,6 +253,7 @@ class ChunkCache {
         if (this.available.length >= 1) {
             chunk = this.available.pop();
             this.occupied.add(chunk);
+            chunk.clear();
         }
         return chunk;
     }

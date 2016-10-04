@@ -48,9 +48,9 @@ http://www.wtfpl.net/ for more details.
                     <legend>Brush</legend>
                     <label for="type">Type</label>
                     <select id="type">
-                        <option value="0">Pixel</option>
-                        <option value="1">Ellipse</option>
-                        <option value="2">Rectangle</option>
+                        <option>Pixel</option>
+                        <option>Ellipse</option>
+                        <option>Rectangle</option>
                     </select>
                     <br>
                     <hr>
@@ -70,10 +70,11 @@ http://www.wtfpl.net/ for more details.
                     <hr>
                     <label for="type">Falloff</label>
                     <select id="falloff">
-                        <option value="constant">Constant</option>
-                        <option value="linear">Linear</option>
-                        <option value="spherical">Spherical</option>
-                        <option value="cosine">Cosine</option>
+                        <option>Constant</option>
+                        <option>Linear</option>
+                        <option>Spherical</option>
+                        <option value="InverseSpherical">Inverse Spherical</option>
+                        <option>Cosine</option>
                     </select>
                     <br>
                     <label for="bias">Bias</label>
@@ -81,6 +82,25 @@ http://www.wtfpl.net/ for more details.
                     <br>
                     <label for="gain">Gain</label>
                     <input id="gain" class="withSlider" type="number" min="0.0" max="1.0" step="0.0625">
+                    <br>
+                </fieldset>
+                <fieldset>
+                    <legend>Blend</legend>
+                    <label for="mode">Mode</label>
+                    <select id="mode">
+                        <option>Mix</option>
+                        <option>Erase</option>
+                        <option>Add</option>
+                        <option>Subtract</option>
+                        <option>Multiply</option>
+                        <option>Divide</option>
+                    </select>
+                    <br>
+                    <label for="strength">Strength</label>
+                    <input id="strength" class="withSlider" type="number" min="0.0" max="1.0" step="0.0625">
+                    <br>
+                    <label for="preserveAlpha">Preserve Alpha</label>
+                    <input id="preserveAlpha" type="checkbox">
                     <br>
                 </fieldset>
                 <fieldset>
@@ -153,6 +173,9 @@ http://www.wtfpl.net/ for more details.
                     </select>
                 </fieldset>
             </div>-->
+            <div id="forkMe" class="panel">
+                <a href="https://github.com/not-surt/GLImEd">Fork me you git!</a>
+            </div>
             <div id="hud" class="hud">
                 <label for="pixel">Pixel</label>
                 <output id="pixel"></output>

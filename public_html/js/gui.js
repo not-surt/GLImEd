@@ -50,10 +50,6 @@ class Gui {
                 spinbox.dispatchEvent(new Event("change"));
             });
         };
-        let setField = (id, value) => {
-            this[id].value = value;
-            this[id].dispatchEvent(new Event("change"));
-        };
 
         container.appendChild(subtree);
 
@@ -127,13 +123,13 @@ class Gui {
             this.spacing.value = app.strokeSpacing;
             this.spacing.dispatchEvent(new Event("change"));
         });
-        setField("proportionalSpacing", true);
-        setField("spacing", app.strokeSpacing);
 
         this.type.addEventListener("change", (event) => {
-            app.brush.type = parseInt(this.type.value);
+            app.brush.type = this.type.value;
         });
-        setField("type", app.brush.type);
+        this.falloff.addEventListener("change", (event) => {
+            app.brush.falloff = this.falloff.value;
+        });
 
         connectFieldSliderSpinbox("width", (event) => {
             if (this.fixedRatio.checked) {
@@ -157,24 +153,22 @@ class Gui {
             }
             this.fixedRatioOutput.value = app.brushRatio.toFixed(3);
         }, app.brush);
-        setField("fixedRatio", true);
-        setField("width", app.brush.width);
-        setField("height", app.brush.height);
 
         connectFieldSliderSpinbox("angle", null, app.brush);
-        setField("angle", app.brush.angle);
 
         connectFieldSliderSpinbox("bias", null, app.brush);
         connectFieldSliderSpinbox("gain", null, app.brush);
-        setField("bias", app.brush.bias);
-        setField("gain", app.brush.gain);
+
+        this.mode.addEventListener("change", (event) => {
+            app.blendMode = this.mode.value;
+        });
+        connectFieldSliderSpinbox("strength", null, app, "blendStrength");
 
         this.colour.addEventListener("change", (event) => {
             let newColour = Colour.fromString(this.colour.value);
             newColour.a = app.colour.a;
             app.colour = newColour;
         });
-        setField("colour", app.colour);
 
         connectFieldSliderSpinbox("bits", (event) => {
             this.levels.value = Math.pow(2, this.bits.value);
@@ -186,8 +180,6 @@ class Gui {
             app.colour = app.colour;
             app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
-        setField("bits", 8);
-        setField("levels", 256);
 
         connectFieldSliderSpinbox("red", (event) => {
             let newColour = Colour.clone(app.colour);
@@ -207,9 +199,6 @@ class Gui {
             app.colour = newColour;
             app._colourHSL = tinycolor(app._colour.toObject()).toHsl();
         });
-        setField("red", app.colour.r);
-        setField("green", app.colour.g);
-        setField("blue", app.colour.b);
 
         connectFieldSliderSpinbox("alpha", (event) => {
             let newColour = Colour.clone(app.colour);
@@ -217,7 +206,6 @@ class Gui {
             app.colour = newColour;
             app._colourHSL.a = newColour.a / 255;
         });
-        setField("alpha", app.colour.a);
 
         connectFieldSliderSpinbox("hue", (event) => {
             app._colourHSL.h = this.hue.value;
@@ -234,9 +222,6 @@ class Gui {
             let rgba = tinycolor(app._colourHSL).toRgb();
             app.colour = new Colour(rgba.r, rgba.g, rgba.b, rgba.a * 255);
         });
-        setField("hue", app.colour.h);
-        setField("saturation", app.colour.s);
-        setField("lightness", app.colour.l);
 
         this.chunks.style.width = "12ch";
 
@@ -252,6 +237,11 @@ class Gui {
         //this.layer.style.width = "100%";
         //this.layer.size = 8;
 
+        // Fork me
+        this.forkMe.style.position = "fixed";
+        this.forkMe.style.bottom = 0;
+        this.forkMe.style.right = 0;
+
         // HUD
         this.hud.style.position = "fixed";
         this.hud.style.top = 0;
@@ -266,6 +256,36 @@ class Gui {
         this.pan.style.width = "18ch";
 
         this.zoom.style.width = "12ch";
+    }
+
+    initialize(app) {
+        let setField = (id, value) => {
+            this[id].value = value;
+            this[id].dispatchEvent(new Event("change"));
+        };
+
+        setField("proportionalSpacing", true);
+        setField("spacing", app.strokeSpacing);
+        setField("type", app.brush.type);
+        setField("fixedRatio", true);
+        setField("width", app.brush.width);
+        setField("height", app.brush.height);
+        setField("angle", app.brush.angle);
+        setField("falloff", app.brush.falloff);
+        setField("bias", app.brush.bias);
+        setField("gain", app.brush.gain);
+        setField("mode", app.blendMode);
+        setField("strength", app.blendStrength);
+        setField("colour", app.colour);
+        setField("bits", 8);
+        setField("levels", 256);
+        setField("red", app.colour.r);
+        setField("green", app.colour.g);
+        setField("blue", app.colour.b);
+        setField("alpha", app.colour.a);
+        setField("hue", app.colour.h);
+        setField("saturation", app.colour.s);
+        setField("lightness", app.colour.l);
     }
 
     update(app) {
