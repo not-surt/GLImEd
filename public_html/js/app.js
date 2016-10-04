@@ -890,14 +890,13 @@ class App {
         this.stroke = null;
     }
 
-    strokeSegmentDabs(start, end, colour, spacing, offset) {
+    strokeSegmentDabs(start, end, spacing, offset, output) {
         let delta = [end[0] - start[0], end[1] - start[1]];
         let length = Math.hypot(delta[0], delta[1]);
         let step = [delta[0] / length, delta[1] / length];
         let pos;
-        for (pos = offset; pos < length; pos += spacing) {
-            this.dab([start[0] + pos * step[0], start[1] + pos * step[1]], colour);
-        }
+        for (pos = offset; pos < length; pos += spacing)
+            output.push([start[0] + pos * step[0], start[1] + pos * step[1]]);
         return pos - length;
     }
 
@@ -989,19 +988,22 @@ class App {
     }
 
     paintPoint(pos) {
-        this.dab(end, this.colour);
+        this.dab(pos, this.colour);
         this.requestRedraw();
         this.gui.update(this);
     }
     
     paintStroke(start, end) {
-        if (vec2.equals(start, end)) this.dab(end, this.colour);
+        let dabs = [];
+        if (vec2.equals(start, end)) dabs.push(end);
         else {
             let spacing = this.gui.proportionalSpacing.checked
                 ? this.strokeSpacing * Math.sqrt(this.brush.width * this.brush.height)
                 : this.strokeSpacing;
-            this.offset = this.strokeSegmentDabs(start, end, this.colour, spacing, this.offset);
+            this.offset = this.strokeSegmentDabs(start, end, spacing, this.offset, dabs);
         }
+        for (let i = 0; i < dabs.length; ++i)
+            this.dab(dabs[i], this.colour);
         this.requestRedraw();
         this.gui.update(this);
     }
