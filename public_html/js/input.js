@@ -28,6 +28,8 @@ class Input {
         this.keydownCount = 0;
         this.mouseButtons = new Map();
         this.lastMousePos;
+        this.inDrag = false;
+        this.onCanvas = false;
 
         this.keyListener = this.keyHandler.bind(this);
         this.app.canvas.addEventListener("keydown", this.keyListener);
@@ -86,6 +88,27 @@ class Input {
             this.app.canvas.dispatchEvent(new MouseEvent("mousemove", { "clientX": event.clientX, "clientY": event.clientY, "movementX": event.movementX, "movementY": event.movementY }));
         }
     }
+    
+    addMouseButton(button) {
+        let count = (this.mouseButtons.has(button) ? this.mouseButtons.get(button) : 0);
+        if (count === 0) {
+            document.addEventListener("mousemove", this.mouseListener);
+            document.addEventListener("mouseup", this.mouseListener);
+        }
+        this.mouseButtons.set(event.button, count + 1);
+    }
+    
+    removeMouseButton(button) {
+        let count = this.mouseButtons.get(button) - 1;
+        this.mouseButtons.set(button, count);
+        if (count === 0)
+            this.mouseButtons.delete(button);
+
+        if (this.mouseButtons.size === 0) {
+            document.removeEventListener("mouseup", this.mouseListener);
+            document.removeEventListener("mousemove", this.mouseListener);
+        }
+    }
 
     mouseHandler(event) {
         let pos = [event.clientX, event.clientY];
@@ -141,27 +164,10 @@ class Input {
         else if (event.type === "mousedown") {
             if (event.button === this.MouseButtons.MIDDLE && !this.mouseButtons.has(event.button))
                 this.app.canvas.requestPointerLock();
-
-            if (this.mouseButtons.size === 0) {
-                document.addEventListener("mousemove", this.mouseListener);
-                document.addEventListener("mouseup", this.mouseListener);
-            }
-
-            let count = 1;
-            if (this.mouseButtons.has(event.button))
-                count += this.mouseButtons.get(event.button);
-            this.mouseButtons.set(event.button, count);
+            this.addMouseButton(event.button);
         }
         else if (event.type === "mouseup") {
-            let count = this.mouseButtons.get(event.button) - 1;
-            this.mouseButtons.set(event.button, count);
-            if (count === 0)
-                this.mouseButtons.delete(event.button);
-
-            if (this.mouseButtons.size === 0) {
-                document.removeEventListener("mouseup", this.mouseListener);
-                document.removeEventListener("mousemove", this.mouseListener);
-            }
+            this.removeMouseButton(event.button);
 
             if (event.button === this.MouseButtons.MIDDLE && !this.mouseButtons.has(event.button))
                 document.exitPointerLock();

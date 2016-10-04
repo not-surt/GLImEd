@@ -572,42 +572,41 @@ class App {
 
         let gl = this.gl;
 
+        this.clipVertBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.clipVertBuffer);
         this.clipQuadVerts = Float32Array.of(
             1.0, 1.0,
             -1.0, 1.0,
             1.0, -1.0,
             -1.0, -1.0
         );
+        gl.bufferData(gl.ARRAY_BUFFER, this.clipQuadVerts, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+        this.uvVertBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvVertBuffer);
         this.uvQuadVerts = Float32Array.of(
             1.0, 1.0,
             0.0, 1.0,
             1.0, 0.0,
             0.0, 0.0
         );
-        this.triStripQuadIndices = Uint8Array.of(
-            0, 1, 2, 3
-        );
-        this.lineLoopQuadIndices = Uint8Array.of(
-            0, 1, 3, 2
-        );
-
-        this.clipVertBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.clipVertBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, this.clipQuadVerts, gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-        this.uvVertBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvVertBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.uvQuadVerts, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         this.triStripQuadElement = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.triStripQuadElement);
+        this.triStripQuadIndices = Uint8Array.of(
+            0, 1, 2, 3
+        );
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.triStripQuadIndices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
         this.lineLoopQuadElement = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.lineLoopQuadElement);
+        this.lineLoopQuadIndices = Uint8Array.of(
+            0, 1, 3, 2
+        );
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.lineLoopQuadIndices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
         
@@ -876,20 +875,16 @@ class App {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
-    segment(start, end, colour, spacing, strokeOffset) {
-        spacing = Math.max(1, spacing);
-        let startOffset = strokeOffset - (strokeOffset / spacing) * spacing;
+    strokeSegment(start, end, colour, spacing, strokeOffset) {
         let delta = [end[0] - start[0], end[1] - start[1]];
         let length = Math.hypot(delta[0], delta[1]);
-        let steps = length / spacing;
-        let step = [delta[0] / steps, delta[1] / steps];
-        let pos = [start[0] + startOffset * step[0], start[1] + startOffset * step[1]];
-        for (let i = strokeOffset + startOffset; i < strokeOffset + length; i += spacing) {
-            this.dab(pos, colour);
-            pos[0] += step[0];
-            pos[1] += step[1];
+        let step = [delta[0] / length, delta[1] / length];
+        let pos;
+        for (pos = strokeOffset; pos < length; pos += spacing) {
+            this.dab([start[0] + pos * step[0], start[1] + pos * step[1]], colour);
         }
-        return strokeOffset + length;
+        let endOffset = pos - length;
+        return endOffset;
     }
 
     dab(pos, colour) {
@@ -983,7 +978,7 @@ class App {
         let spacing = this.gui.proportionalSpacing.checked
             ? this.strokeSpacing * Math.sqrt(this.brush.width * this.brush.height)
             : this.strokeSpacing;
-        this.offset = this.segment(start, end, this.colour, spacing, this.offset);
+        this.offset = this.strokeSegment(start, end, this.colour, spacing, this.offset);
         this.requestRedraw();
         this.gui.update(this);
     }
