@@ -40,6 +40,7 @@ class Input {
         this.app.canvas.addEventListener("mouseenter", this.mouseListener);
         this.app.canvas.addEventListener("wheel", this.mouseListener);
         this.app.canvas.addEventListener("contextmenu", (event) => {
+            event.stopPropagation();
             event.preventDefault();
         });
         this.clearInputListener = this._clearInputHandlers.bind(this);
@@ -95,7 +96,7 @@ class Input {
             document.addEventListener("mousemove", this.mouseListener);
             document.addEventListener("mouseup", this.mouseListener);
         }
-        this.mouseButtons.set(event.button, count + 1);
+        this.mouseButtons.set(button, count + 1);
     }
     
     removeMouseButton(button) {
@@ -117,7 +118,7 @@ class Input {
         vec2.transformMat2d(worldPos, worldPos, this.app.mouseMatrix);
         vec2.transformMat2d(worldPos, worldPos, this.app.camera.inverseMatrix);
         //pr("world: " + worldPos[0] + ", " + worldPos[1] + "   pan: " + this.camera.pan[0] + ", " + this.camera.pan[1]);
-
+        
         if (event.type === "wheel") {
             let steps = [Math.sign(event.deltaX), Math.sign(event.deltaY)];
             this.app.zoom(steps);
@@ -136,12 +137,12 @@ class Input {
             let lastWorldPos = vec2.fromValues(this.lastMousePos[0], this.lastMousePos[1]);
             vec2.transformMat2d(lastWorldPos, lastWorldPos, this.app.mouseMatrix);
             vec2.transformMat2d(lastWorldPos, lastWorldPos, this.app.camera.inverseMatrix);
+            if (this.mouseButtons.has(this.MouseButtons.RIGHT)) {
+                this.app.pick(worldPos);
+            }
             if (this.mouseButtons.has(this.MouseButtons.LEFT)) {
                 this.app.paint(lastWorldPos, worldPos);
                 if (event.type === "mouseup") this.app.offset = 0;
-            }
-            if (this.mouseButtons.has(this.MouseButtons.RIGHT)) {
-                this.app.pick(worldPos);
             }
         }
 

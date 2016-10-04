@@ -875,16 +875,15 @@ class App {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
-    strokeSegment(start, end, colour, spacing, strokeOffset) {
+    strokeSegment(start, end, colour, spacing, offset) {
         let delta = [end[0] - start[0], end[1] - start[1]];
         let length = Math.hypot(delta[0], delta[1]);
         let step = [delta[0] / length, delta[1] / length];
         let pos;
-        for (pos = strokeOffset; pos < length; pos += spacing) {
+        for (pos = offset; pos < length; pos += spacing) {
             this.dab([start[0] + pos * step[0], start[1] + pos * step[1]], colour);
         }
-        let endOffset = pos - length;
-        return endOffset;
+        return pos - length;
     }
 
     dab(pos, colour) {
