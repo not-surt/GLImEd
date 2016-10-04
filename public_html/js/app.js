@@ -283,6 +283,7 @@ class App {
         this.guiUpdateRequest = 0;
         this.mousePos = null;
         this.offset = 0;
+        this.stroke = null;
 
         this.projectionMatrix;
         this.inverseProjectionMatrix;
@@ -874,8 +875,22 @@ class App {
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
+    
+    strokeStart(pos) {
+        this.stroke = [];
+        this.stroke.push(pos);
+    }
+    
+    strokeAdd(pos) {
+        this.stroke.push(pos);
+    }
+    
+    strokeFinish(pos) {
+        console.log(JSON.stringify(this.stroke));
+        this.stroke = null;
+    }
 
-    strokeSegment(start, end, colour, spacing, offset) {
+    strokeSegmentDabs(start, end, colour, spacing, offset) {
         let delta = [end[0] - start[0], end[1] - start[1]];
         let length = Math.hypot(delta[0], delta[1]);
         let step = [delta[0] / length, delta[1] / length];
@@ -973,11 +988,20 @@ class App {
         this.image.chunkCache.release(workChunk);
     }
 
-    paint(start, end) {
-        let spacing = this.gui.proportionalSpacing.checked
-            ? this.strokeSpacing * Math.sqrt(this.brush.width * this.brush.height)
-            : this.strokeSpacing;
-        this.offset = this.strokeSegment(start, end, this.colour, spacing, this.offset);
+    paintPoint(pos) {
+        this.dab(end, this.colour);
+        this.requestRedraw();
+        this.gui.update(this);
+    }
+    
+    paintStroke(start, end) {
+        if (vec2.equals(start, end)) this.dab(end, this.colour);
+        else {
+            let spacing = this.gui.proportionalSpacing.checked
+                ? this.strokeSpacing * Math.sqrt(this.brush.width * this.brush.height)
+                : this.strokeSpacing;
+            this.offset = this.strokeSegmentDabs(start, end, this.colour, spacing, this.offset);
+        }
         this.requestRedraw();
         this.gui.update(this);
     }

@@ -141,7 +141,7 @@ class Input {
                 this.app.pick(worldPos);
             }
             if (this.mouseButtons.has(this.MouseButtons.LEFT)) {
-                this.app.paint(lastWorldPos, worldPos);
+                this.app.paintStroke(lastWorldPos, worldPos);
                 if (event.type === "mouseup") this.app.offset = 0;
             }
         }
@@ -161,10 +161,14 @@ class Input {
             this.app.mousePos = worldPos;
             this.app.requestRedraw();
             this.app.requestGuiUpdate();
+            if (event.button === this.MouseButtons.LEFT && this.mouseButtons.has(event.button))
+                this.app.strokeAdd(worldPos);
         }
         else if (event.type === "mousedown") {
             if (event.button === this.MouseButtons.MIDDLE && !this.mouseButtons.has(event.button))
                 this.app.canvas.requestPointerLock();
+            if (event.button === this.MouseButtons.LEFT && !this.mouseButtons.has(event.button))
+                this.app.strokeStart(worldPos);
             this.addMouseButton(event.button);
         }
         else if (event.type === "mouseup") {
@@ -172,6 +176,8 @@ class Input {
 
             if (event.button === this.MouseButtons.MIDDLE && !this.mouseButtons.has(event.button))
                 document.exitPointerLock();
+            if (event.button === this.MouseButtons.LEFT && !this.mouseButtons.has(event.button))
+                this.app.strokeFinish();
         }
 
         this.lastMousePos = pos;
