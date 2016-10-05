@@ -57,6 +57,9 @@ http://www.wtfpl.net/ for more details.
             uniform mat3 modelView;
             uniform mat3 projection;
             uniform float chunkSize;
+            
+            uniform vec2 subImagePos;
+            uniform vec2 subImageSize;
 
             varying vec2 texturePos;
 
@@ -71,6 +74,10 @@ http://www.wtfpl.net/ for more details.
             uniform sampler2D texture;
             uniform float chunkSize;
 
+            uniform sampler2D image;
+            uniform vec2 subImagePos;
+            uniform vec2 subImageSize;
+            
             varying vec2 texturePos;
 
             void main(void) {
@@ -92,6 +99,13 @@ http://www.wtfpl.net/ for more details.
 
             attribute vec2 pos;
 
+            uniform sampler2D srcImage;
+            uniform vec2 srcSubImagePos;
+            uniform vec2 srcSubImageSize;
+            
+            uniform vec2 destSubImagePos;
+            uniform vec2 destSubImageSize;
+            
             varying vec2 texturePos;
 
             void main(void) {
@@ -104,6 +118,13 @@ http://www.wtfpl.net/ for more details.
 
             uniform sampler2D src;
 
+            uniform sampler2D srcImage;
+            uniform vec2 srcSubImagePos;
+            uniform vec2 srcSubImageSize;
+            
+            uniform vec2 destSubImagePos;
+            uniform vec2 destSubImageSize;
+            
             varying vec2 texturePos;
 
             void main(void) {
@@ -120,6 +141,10 @@ http://www.wtfpl.net/ for more details.
             uniform vec2 chunkOffset;
             uniform vec2 chunkSize;
 
+            uniform sampler2D image;
+            uniform vec2 subImagePos;
+            uniform vec2 subImageSize;
+            
             varying vec2 texturePos;
             varying vec2 destPos;
 
@@ -139,6 +164,10 @@ http://www.wtfpl.net/ for more details.
             uniform vec4 colour;
             uniform float blendStrength;
 
+            uniform sampler2D image;
+            uniform vec2 subImagePos;
+            uniform vec2 subImageSize;
+            
             varying vec2 texturePos;
             varying vec2 destPos;
 

@@ -191,7 +191,7 @@ class Palette extends GLImage {
 
 
 class SubImage {
-    constructor(gl, image, pos, size) {
+    constructor(image, pos, size) {
         this._image = image;
         this._pos = pos.slice(0, 2);
         this._size = size.slice(0, 2);
@@ -201,11 +201,15 @@ class SubImage {
     get pos() { return this._pos; }
     get size() { return this._size; }
 
-    beforeRenderTo(gl) {
+    bind(gl) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this._image.framebufferId);
-        gl.enable(gl.SCISSOR_TEST);
         gl.viewport(pos[0], pos[1], size[0], size[1]);
+        gl.enable(gl.SCISSOR_TEST);
         gl.scissors(pos[0], pos[1], size[0], size[1]);
+    }
+    unbind(gl) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.disable(gl.SCISSOR_TEST);
     }
 }
 
@@ -219,41 +223,60 @@ class SimpleImage extends GLImage {
 
 
 
-class Chunk extends GLImage {
-    constructor(gl, size) {
-        super(gl, size, size);
-    }
-}
-
-
-
 class ChunkCache {
-    constructor(gl, chunkCount = 4096, chunkSize = 64, atlasSize = 64) {
+    constructor(gl, chunkCount = 4096, chunkSize = 64) {
         this.available = [];
         this.occupied = new Set();
         this.chunkSize = chunkSize;
-        this.atlasSize = atlasSize;
-        this.atlases = [];
+        this.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+        this.maxTexChunksSize = Math.floor(this.maxTexSize / this.chunkSize);
+        this.texSize = this.maxTexChunksSize * this.chunkSize;
+        this.maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+        console.log(this.maxTextures + " " + this.maxTexSize + " " + this.texSize);
+        
+        //this.pageChunkSize = pageChunkSize;
+        //this.pages = [];
+        //let pageSize = pageChunkSize * pageChunkSize;
 
         for (let i = 0; i < chunkCount; ++i) {
-            this.available[i] = new Chunk(gl, chunkSize);
+            this.available[i] = new SubImage(new GLImage(gl, chunkSize, chunkSize), [0, 0], [this.chunkSize, this.chunkSize]);
+        }
+        
+        this.image = new GLImage(gl, this.texSize, this.texSize);
+        for (let y = 0; y < this.maxTexChunksSize; ++y) {
+            for (let x = 0; x < this.maxTexChunksSize; ++x) {
+                //this.available.push(new SubImage(this.image, [x * this.chunkSize, y * this.chunkSize], [this.chunkSize, this.chunkSize]));
+            }
+        }
+    }
+    
+    addPage(gl) {
+        let pageSize = pageChunkSize * pageChunkSize;
+        let page = new GLImage(gl, pageSize, pageSize);
+        this.pages.push(page);
+
+        for (let y = 0; y < pageChunkSize; ++y) {
+            for (let x = 0; x < pageChunkSize; ++x) {
+                this.available.push(new SubImage(this.atlases[page], [x * this.chunkSize, y * this.chunkSize], [this.chunkSize, this.chunkSize]));
+            }
         }
     }
 
-    subImage(index) {
-        let atlasIndex = Math.floor(index / (this.atlasSize * this.atlasSize));
-        let offset = index - atlasIndex * this.atlasSize * this.atlasSize;
-        let y = Math.floor(offset / this.atlasSize);
-        let x = offset - y * this.atlasSize;
-        return [this.atlases[atlasIndex], [x * this.chunkSize, y * this.chunkSize], [this.chunkSize, this.chunkSize]];
-    }
+    /*subImage(index) {
+        let page = Math.floor(index / (this.pageChunkSize * this.pageChunkSize));
+        let offset = index - page * this.pageChunkSize * this.pageChunkSize;
+        let y = Math.floor(offset / this.pageChunkSize);
+        let x = offset - y * this.pageChunkSize;
+        //return [this.atlases[page], [x * this.chunkSize, y * this.chunkSize], [this.chunkSize, this.chunkSize]];
+        return new SubImage(this.atlases[page], [x * this.chunkSize, y * this.chunkSize], [this.chunkSize, this.chunkSize]);
+    }*/
 
     grab() {
         let chunk = null;
         if (this.available.length >= 1) {
             chunk = this.available.pop();
             this.occupied.add(chunk);
-            chunk.clear();
+            chunk.image.clear();
         }
         return chunk;
     }
@@ -328,7 +351,7 @@ class ChunkedImage extends Map {
         let [chunk, pixel] = this.address(pos);
         let key = ChunkedImage.toKey(chunk);
         if (this.has(key))
-            return this.get(key).getPixel(pixel);
+            return this.get(key).image.getPixel(pixel);
         else
             return new Colour(0, 0, 0, 0);
     }
@@ -336,6 +359,6 @@ class ChunkedImage extends Map {
         let [chunk, pixel] = this.address(pos);
         let key = ChunkedImage.toKey(chunk);
         if (this.has(key) || this.addChunk(chunk))
-            this.get(key).setPixel(pixel, colour);
+            this.get(key).image.setPixel(pixel, colour);
     }
 }

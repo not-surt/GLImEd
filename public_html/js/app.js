@@ -98,6 +98,12 @@ function inverseObject(object) {
     return newObject;
 }
 
+function randomDisk() {
+    let sqrtRadius = Math.sqrt(Math.random());
+    let theta = Math.random() * 2.0 * Math.PI;
+    return [sqrtRadius * Math.cos(theta), sqrtRadius * Math.sin(theta)];
+}
+
 
 
 class Bounds {
@@ -353,7 +359,7 @@ class App {
                 context.drawImage(image, x * chunkedImage.chunkSize, y * chunkedImage.chunkSize, chunkedImage.chunkSize, chunkedImage.chunkSize, 0, 0, chunkedImage.chunkSize, chunkedImage.chunkSize);
                 let chunk = chunkedImage.addChunk([x, y]);
                 let gl = this.gl;
-                gl.bindTexture(gl.TEXTURE_2D, chunk.textureId);
+                gl.bindTexture(gl.TEXTURE_2D, chunk.image.textureId);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, workCanvas);
                 gl.bindTexture(gl.TEXTURE_2D, null);
                 context.clearRect(0, 0, chunkedImage.chunkSize, chunkedImage.chunkSize);
@@ -396,7 +402,7 @@ class App {
             let posX = x * this.image.chunkSize - this.image.extents.x;
             let posY = y * this.image.chunkSize - this.image.extents.y;
             let gl = this.gl;
-            gl.bindFramebuffer(gl.FRAMEBUFFER, chunk.framebufferId);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, chunk.image.framebufferId);
             gl.readPixels(0, 0, this.image.chunkSize, this.image.chunkSize, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             let imageData = new ImageData(new Uint8ClampedArray(pixelData), this.image.chunkSize, this.image.chunkSize);
@@ -810,7 +816,7 @@ class App {
             gl.useProgram(program.id);
             gl.uniformMatrix3fv(program.uniforms["modelView"], false, this.glMatrix);
             gl.activeTexture(gl.TEXTURE0 + 0);
-            gl.bindTexture(gl.TEXTURE_2D, chunk.textureId);
+            gl.bindTexture(gl.TEXTURE_2D, chunk.image.textureId);
             gl.uniform1i(program.uniforms["texture"], 0);
             
             gl.bindVertexArray(this.uvQuadVAO);
@@ -886,7 +892,7 @@ class App {
     }
     
     strokeFinish(pos) {
-        console.log(JSON.stringify(this.stroke));
+        //console.log(JSON.stringify(this.stroke));
         this.stroke = null;
     }
 
@@ -923,7 +929,7 @@ class App {
         let brushMatrix = mat2d.create();
         mat2d.translate(brushMatrix, brushMatrix, pos);
         mat2d.rotate(brushMatrix, brushMatrix, 2 * Math.PI * this.brush.angle);
-        mat2d.scale(brushMatrix, brushMatrix, [this.brush.width, this.brush.height]);
+        mat2d.scale(brushMatrix, brushMatrix, [this.brush.halfWidth, this.brush.halfHeight]);
         mat3.fromMat2d(this.glMatrix, brushMatrix);
         gl.uniformMatrix3fv(program.uniforms["brush"], false, this.glMatrix);
         gl.uniform2f(program.uniforms["chunkSize"], this.image.chunkSize, this.image.chunkSize);
@@ -959,15 +965,15 @@ class App {
                 if (this.image.has(key) || this.image.addChunk(chunkAddress)) {
                     let chunk = this.image.get(key);
 
-                    this.copyImage(chunk, workChunk);
+                    this.copyImage(chunk.image, workChunk.image);
 
-                    gl.bindFramebuffer(gl.FRAMEBUFFER, chunk.framebufferId);
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, chunk.image.framebufferId);
                     gl.viewport(0, 0, this.image.chunkSize, this.image.chunkSize);
 
                     gl.useProgram(program.id);
                     gl.uniform2f(program.uniforms["chunkOffset"], chunkAddress[0] * this.image.chunkSize, chunkAddress[1] * this.image.chunkSize);
                     gl.activeTexture(gl.TEXTURE0 + 0);
-                    gl.bindTexture(gl.TEXTURE_2D, workChunk.textureId);
+                    gl.bindTexture(gl.TEXTURE_2D, workChunk.image.textureId);
                     gl.uniform1i(program.uniforms["dest"], 0);
 
                     if (this.brush.type === "Pixel") {
@@ -1002,15 +1008,18 @@ class App {
                 : this.strokeSpacing;
             this.offset = this.strokeSegmentDabs(start, end, spacing, this.offset, dabs);
         }
-        for (let i = 0; i < dabs.length; ++i)
+        for (let i = 0; i < dabs.length; ++i) {
+            let v = vec2.fromValues(this.gui.brushJitter.value, this.gui.brushJitter.value);
+            vec2.mul(v, v, randomDisk());
+            vec2.add(dabs[i], dabs[i], v);
             this.dab(dabs[i], this.colour);
+        }
         this.requestRedraw();
         this.gui.update(this);
     }
 
     pick(pos) {
         this.colour = this.image.getPixel(pos);
-        //this.colour.unpremultiply();
         this._colourHSL = tinycolor(this.colour).toHsl();
     }
 

@@ -18,13 +18,23 @@ class Brush {
         this.bias = 0.5;
         this.gain = 0.5;
     }
+    
+    get halfWidth() { return this.width / 2.0; }
+    get halfHeight() { return this.height / 2.0; }
+}
+
+
+
+class Stroke {
+    constructor() {
+        
+    }
 }
 
 
 
 class Context {
     constructor() {
-        this.strokeSpacing = 0.5;
         this.colour;
     }
 }
@@ -34,6 +44,7 @@ class Context {
 class Tool {
     constructor(app) {
         this.brush = new Brush(app);
+        this.stroke = new Stroke();
         this.context = new Context();
     }
 }
