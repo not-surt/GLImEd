@@ -288,8 +288,8 @@ class App {
         this.focusRequested = false;
         this.guiUpdateRequest = 0;
         this.mousePos = null;
-        this.offset = 0;
         this.stroke = null;
+        this.strokeOffset = 0;
 
         this.projectionMatrix;
         this.inverseProjectionMatrix;
@@ -884,15 +884,25 @@ class App {
     
     strokeStart(pos) {
         this.stroke = [];
+        this.strokeOffset = 0;
         this.stroke.push(pos);
     }
     
     strokeAdd(pos) {
         this.stroke.push(pos);
+        //this.paintStrokeSegment(this.stroke[this.stroke.length - 2], this.stroke[this.stroke.length - 1]);
+        if (this.stroke.length >= 3) {
+            if (vec2.length(this.stroke[this.stroke.length - 3], this.stroke[this.stroke.length - 1]) < 3.0) {
+                this.stroke.splice(this.stroke.length - 2, 1);
+                return;
+            }
+        }
+        if (this.stroke.length >= 3) this.paintStrokeSegment(this.stroke[this.stroke.length - 3], this.stroke[this.stroke.length - 2]);
     }
     
-    strokeFinish(pos) {
-        //console.log(JSON.stringify(this.stroke));
+    strokeFinish() {
+        if (this.stroke.length === 1) this.paintStrokeSegment(this.stroke[0], this.stroke[0]);
+        else this.paintStrokeSegment(this.stroke[this.stroke.length - 2], this.stroke[this.stroke.length - 1]);
         this.stroke = null;
     }
 
@@ -993,20 +1003,14 @@ class App {
         this.image.chunkCache.release(workChunk);
     }
 
-    paintPoint(pos) {
-        this.dab(pos, this.colour);
-        this.requestRedraw();
-        this.gui.update(this);
-    }
-    
-    paintStroke(start, end) {
+    paintStrokeSegment(start, end) {
         let dabs = [];
         if (vec2.equals(start, end)) dabs.push(end);
         else {
             let spacing = this.gui.proportionalSpacing.checked
                 ? this.strokeSpacing * Math.sqrt(this.brush.width * this.brush.height)
                 : this.strokeSpacing;
-            this.offset = this.strokeSegmentDabs(start, end, spacing, this.offset, dabs);
+            this.strokeOffset = this.strokeSegmentDabs(start, end, spacing, this.strokeOffset, dabs);
         }
         for (let i = 0; i < dabs.length; ++i) {
             let v = vec2.fromValues(this.gui.brushJitter.value, this.gui.brushJitter.value);

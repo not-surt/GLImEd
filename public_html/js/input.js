@@ -140,10 +140,6 @@ class Input {
             if (this.mouseButtons.has(this.MouseButtons.RIGHT)) {
                 this.app.pick(worldPos);
             }
-            if (this.mouseButtons.has(this.MouseButtons.LEFT)) {
-                this.app.paintStroke(lastWorldPos, worldPos);
-                if (event.type === "mouseup") this.app.offset = 0;
-            }
         }
 
         if (event.type === "mouseenter") {

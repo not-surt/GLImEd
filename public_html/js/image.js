@@ -204,8 +204,8 @@ class SubImage {
     bind(gl) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this._image.framebufferId);
         gl.viewport(pos[0], pos[1], size[0], size[1]);
-        gl.enable(gl.SCISSOR_TEST);
-        gl.scissors(pos[0], pos[1], size[0], size[1]);
+        //gl.enable(gl.SCISSOR_TEST);
+        //gl.scissors(pos[0], pos[1], size[0], size[1]);
     }
     unbind(gl) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -229,10 +229,10 @@ class ChunkCache {
         this.occupied = new Set();
         this.chunkSize = chunkSize;
         this.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-        this.maxTexChunksSize = Math.floor(this.maxTexSize / this.chunkSize);
-        this.texSize = this.maxTexChunksSize * this.chunkSize;
+        this.texChunksSize = Math.floor(this.maxTexSize / this.chunkSize);
+        this.texSize = this.texChunksSize * this.chunkSize;
         this.maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-        console.log(this.maxTextures + " " + this.maxTexSize + " " + this.texSize);
+        //console.log(this.maxTextures + " " + this.maxTexSize + " " + this.texSize);
         
         //this.pageChunkSize = pageChunkSize;
         //this.pages = [];
@@ -243,23 +243,26 @@ class ChunkCache {
         }
         
         this.image = new GLImage(gl, this.texSize, this.texSize);
-        for (let y = 0; y < this.maxTexChunksSize; ++y) {
-            for (let x = 0; x < this.maxTexChunksSize; ++x) {
+        for (let y = 0; y < this.texChunksSize; ++y) {
+            for (let x = 0; x < this.texChunksSize; ++x) {
                 //this.available.push(new SubImage(this.image, [x * this.chunkSize, y * this.chunkSize], [this.chunkSize, this.chunkSize]));
             }
         }
     }
     
     addPage(gl) {
-        let pageSize = pageChunkSize * pageChunkSize;
-        let page = new GLImage(gl, pageSize, pageSize);
+        let page = new GLImage(gl, this.texSize, this.texSize);
         this.pages.push(page);
 
-        for (let y = 0; y < pageChunkSize; ++y) {
-            for (let x = 0; x < pageChunkSize; ++x) {
+        for (let y = 0; y < this.texChunksSize; ++y) {
+            for (let x = 0; x < this.texChunksSize; ++x) {
                 this.available.push(new SubImage(this.atlases[page], [x * this.chunkSize, y * this.chunkSize], [this.chunkSize, this.chunkSize]));
             }
         }
+    }
+    
+    compact() {
+        
     }
 
     /*subImage(index) {
