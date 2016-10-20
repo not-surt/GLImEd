@@ -1,0 +1,5 @@
+Stroke dab methods
+------------------
+Displacement: distance between last dab and next
+Travel: cumulative distance mouse cursor moved between last dab and next
+Time: draw dab every time measure

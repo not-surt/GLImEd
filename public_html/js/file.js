@@ -8,6 +8,10 @@ http://www.wtfpl.net/ for more details.
 
 
 
+"use strict";
+
+
+
 class File {
     
 }

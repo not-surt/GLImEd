@@ -11,6 +11,9 @@ http://www.wtfpl.net/ for more details.
 /* global Float32Array, Uint8Array */
 
 "use strict";
+
+
+
 class Colour extends Uint8Array {
     constructor(r = 0, g = 0, b = 0, a = 255) {
         super(4);
@@ -202,14 +205,14 @@ class SubImage {
     get size() { return this._size; }
 
     bind(gl) {
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this._image.framebufferId);
-        gl.viewport(pos[0], pos[1], size[0], size[1]);
-        //gl.enable(gl.SCISSOR_TEST);
-        //gl.scissors(pos[0], pos[1], size[0], size[1]);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.image.framebufferId);
+        gl.viewport(this.pos[0], this.pos[1], this.size[0], this.size[1]);
+        gl.enable(gl.SCISSOR_TEST);
+        gl.scissor(this.pos[0], this.pos[1], this.size[0], this.size[1]);
     }
     unbind(gl) {
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.disable(gl.SCISSOR_TEST);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 }
 
