@@ -80,6 +80,7 @@ http://www.wtfpl.net/ for more details.
         app.guiHTML = guiHTML;
         app.shaderHTML = shaderHTML;
         app.initialize();
+        resize();
     }
     
     function preload() {
