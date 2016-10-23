@@ -60,6 +60,23 @@ class Util {
 
 
 
+class Requester {
+    constructor(func) {
+        this.func = func;
+        this.pendingRequest = 0;
+    }
+
+    request(...args) {
+        if (this.pendingRequest) window.cancelAnimationFrame(this.pendingRequest);
+        this.pendingRequest = window.requestAnimationFrame(() => {
+            this.pendingRequest = 0;
+            this.func(...args);
+        });
+    }
+}
+
+
+
 class Bounds {
     constructor(x = Number.MAX_VALUE, y = Number.MAX_VALUE, width = Number.MIN_VALUE, height = Number.MIN_VALUE) {
         this.x = x;

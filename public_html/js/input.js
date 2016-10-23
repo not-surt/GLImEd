@@ -122,8 +122,7 @@ class Input {
         if (event.type === "wheel") {
             let steps = [Math.sign(event.deltaX), Math.sign(event.deltaY)];
             this.app.zoom(steps);
-            this.app.requestRedraw();
-            this.app.requestGuiUpdate();
+            this.app.updateRequester.request();
         }
         else if (this.mouseButtons.has(this.MouseButtons.MIDDLE) || (this.mouseButtons.has(this.MouseButtons.LEFT) && event.getModifierState("Control"))) {
             if (event.type === "mousemove") {
@@ -150,13 +149,11 @@ class Input {
             this.app.canvas.removeEventListener("mouseleave", this.mouseListener);
             this.app.canvas.removeEventListener("mousemove", this.mouseListener);
             this.app.mousePos = null;
-            this.app.requestRedraw();
-            this.app.requestGuiUpdate();
+            this.app.updateRequester.request();
         }
         else if (event.type === "mousemove" && event.target === this.app.canvas) {
             this.app.mousePos = worldPos;
-            this.app.requestRedraw();
-            this.app.requestGuiUpdate();
+            this.app.updateRequester.request();
             if (event.button === this.MouseButtons.LEFT && this.mouseButtons.has(event.button))
                 this.app.strokeAdd(worldPos);
         }

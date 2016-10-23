@@ -18,9 +18,6 @@ class App {
     constructor(container) {
         this.SCALE = 1;
 
-        this.STROKE_SEGMENT_DAB_MAX = 1024;
-        this.STROKE_SEGMENT_ARRAY_SIZE = this.STROKE_SEGMENT_DAB_MAX * 2;
-
         this.POS_ATTRIB = 0;
         this.INSTANCE_OFFSET_ATTRIB = 1;
 
@@ -37,16 +34,9 @@ class App {
         this.workBuffer = null;
 
         this.filename = null;
-        this.initialized = false;
-        this.redrawRequest = 0;
-        this.resizeRequest = false;
-        this.pendingResizeRequest = null;
-        this.focusRequested = false;
-        this.guiUpdateRequest = 0;
         this.mousePos = null;
         this.stroke = null;
         this.strokeOffset = 0;
-        this.strokeSegmentArray = new Float32Array(this.STROKE_SEGMENT_ARRAY_SIZE);
 
         this.projectionMatrix;
         this.inverseProjectionMatrix;
@@ -98,8 +88,7 @@ class App {
         this.chunkCache = new ChunkCache(this.gl);
         this.image = new ChunkedImage(this.chunkCache);
         this.camera = new Camera();
-        this.requestRedraw();
-        this.requestGuiUpdate();
+        this.updateRequester.request();
     }
 
     chunkImage(image) {
@@ -137,8 +126,7 @@ class App {
                     this.image = this.chunkImage(image);
                     this.chunkCache = this.image.chunkCache;
                     this.camera = new Camera();
-                    this.requestRedraw();
-                    this.requestGuiUpdate();
+                    this.updateRequester.request();
                     URL.revokeObjectURL(url);
                 });
                 image.src = url;
@@ -175,34 +163,6 @@ class App {
         });
     }
 
-    requestFocus() {
-        if (!this.initialized) this.focusRequested = true;
-        else this.canvas.focus();
-    }
-
-    requestResize(width, height) {
-        if (!this.initialized) {
-            this.pendingResizeRequest = this.resize.bind(this, width, height);
-        }
-        else {
-            if (this.resizeRequest)
-                window.cancelAnimationFrame(this.resizeRequest);
-            this.resizeRequest = window.requestAnimationFrame(() => {
-                this.resize(width, height);
-                this.resizeRequest = 0;
-            });
-        }
-    }
-
-    requestGuiUpdate() {
-        if (this.guiUpdateRequest)
-            window.cancelAnimationFrame(this.guiUpdateRequest);
-        this.guiUpdateRequest = window.requestAnimationFrame(() => {
-            this.gui.update(this);
-            this.guiUpdateRequest = 0;
-        });
-    }
-
     resize(width, height) {
         this.container.style.width = width;
         this.container.style.height = height;
@@ -232,7 +192,7 @@ class App {
         //mat2d.set(this.mouseMatrix, clientRectScaleX, 0.0, 0.0, clientRectScaleY, -(clientRect.width / 2) * clientRectScaleX, -(clientRect.height / 2) * clientRectScaleY);
         mat2d.set(this.mouseMatrix, clientRectScaleX, 0.0, 0.0, clientRectScaleY, -(this.canvas.width / 2), -(this.canvas.height / 2));
 
-        this.requestRedraw();
+        this.updateRequester.request();
     }
 
     initialize() {
@@ -243,6 +203,14 @@ class App {
 
         this.gui = new Gui(this, this.guiHTML, this.container);
         this.canvas = this.gui.canvas;
+        
+        this.resizeRequester = new Requester((width, height) => {
+            this.resize(width, height);
+        });
+        this.updateRequester = new Requester(() => {
+            this.draw();
+            this.gui.update(this);
+        });
 
         if (!(this.gl = GL.initializeContext(this.canvas))) return false;
         
@@ -419,24 +387,7 @@ class App {
 
         this.gui.initialize(this);
 
-        this.initialized = true;
-        if (this.pendingResizeRequest) this.pendingResizeRequest();
-        if (this.focusRequested) this.requestFocus();
-        this.requestRedraw();
-    }
-
-    requestRedraw() {
-        if (!this.initialized) {
-
-        }
-        else {
-            if (this.redrawRequest)
-                window.cancelAnimationFrame(this.redrawRequest);
-            this.redrawRequest = window.requestAnimationFrame(() => {
-                this.draw();
-                this.redrawRequest = 0;
-            });
-        }
+        this.updateRequester.request();
     }
 
     draw() {
@@ -586,7 +537,8 @@ class App {
         let step = [delta[0] / length, delta[1] / length];
         let pos, i;
         for (pos = offset, i = 0; pos < length; pos += spacing, ++i) {
-            output.set([start[0] + pos * step[0], start[1] + pos * step[1]], i * 2);
+            //output.set([start[0] + pos * step[0], start[1] + pos * step[1]], i * 2);
+            output.push(...[start[0] + pos * step[0], start[1] + pos * step[1]]);
         }
         return [pos - length, i];
     }
@@ -594,11 +546,12 @@ class App {
     paintStrokeSegment(start, end) {
         let gl = this.gl;
         
-        let dabs = new Float32Array(this.STROKE_SEGMENT_ARRAY_SIZE);
+        //let dabs = new Float32Array(1024);
+        let dabs = [];
         let count;
         if (vec2.equals(start, end)) {
-            //dabs.push(end);
-            dabs.set(end);
+            dabs.push(...end);
+            //dabs.set(end);
             count = 1;
         }
         else {
@@ -716,8 +669,7 @@ class App {
             }
         }
         
-        this.requestRedraw();
-        this.gui.update(this);
+        this.updateRequester.request();
     }
 
     pick(pos) {
@@ -727,13 +679,11 @@ class App {
 
     pan(delta) {
         this.camera.move(delta);
-        this.requestRedraw();
-        this.requestGuiUpdate();
+        this.updateRequester.request();
     }
 
     zoom(steps, pos) {
         this.camera.zoomAt(Math.pow(2, -steps[1]), pos);
-        this.requestRedraw();
-        this.requestGuiUpdate();
+        this.updateRequester.request();
     }
 }

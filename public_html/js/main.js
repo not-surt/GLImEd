@@ -73,13 +73,13 @@ http://www.wtfpl.net/ for more details.
     
     function start() {
         let app = new App(document.getElementById("App"));
-        let resize = () => { app.requestResize(window.innerWidth, window.innerHeight); };
+        let resize = () => { app.resizeRequester.request(window.innerWidth, window.innerHeight); };
         window.addEventListener("pageshow", resize);
         window.addEventListener("resize", resize);
-        app.requestFocus();
         app.guiHTML = guiHTML;
         app.shaderHTML = shaderHTML;
         app.initialize();
+        app.canvas.focus();
         resize();
     }
     
