@@ -24,9 +24,9 @@ class GL {
         // Fallback to WebGL 1 context plus extensions
         else if ((gl = canvas.getContext("webgl", contextParams)))
             extensions = [
-                ["ANGLE_instanced_arrays", "ANGLE", ["drawArraysInstanced", "drawElementsInstanced", "vertexAttribDivisor"]],
-                ["OES_vertex_array_object", "OES", ["createVertexArray", "deleteVertexArray", "isVertexArray", "bindVertexArray"]],
-                ["OES_element_index_uint"]
+                ["ANGLE", "instanced_arrays", ["drawArraysInstanced", "drawElementsInstanced", "vertexAttribDivisor"]],
+                ["OES", "vertex_array_object", ["createVertexArray", "deleteVertexArray", "isVertexArray", "bindVertexArray"]],
+                ["OES", "element_index_uint"]
             ];
         else {
             console.log("Failure getting WebGL context!");
@@ -35,13 +35,14 @@ class GL {
 
         // Attach extensions
         let missingExtensions = [];
-        for (let [name, suffix, funcs] of extensions) {
-            let extension = gl.getExtension(name);
-            if (!extension) missingExtensions.push(name);
+        for (let [vendor, name, funcs] of extensions) {
+            let extensionName = vendor + "_" + name;
+            let extension = gl.getExtension(extensionName);
+            if (!extension) missingExtensions.push(extensionName);
             else if (funcs) {
                 for (let funcName of funcs) {
-                    let name = funcName + suffix;
-                    this.gl[funcName] = (...args) => { return extension[name](...args); };
+                    let name = funcName + vendor;
+                    gl[funcName] = (...args) => { return extension[name](...args); };
                 }
             }
         }

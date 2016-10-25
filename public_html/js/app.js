@@ -195,14 +195,16 @@ class App {
         this.updateRequester.request();
     }
 
-    initialize() {
+    initialize(gui, gl, programs) {
         this._colour = new Colour();
         this._colourHSL = tinycolor(this._colour.toObject()).toHsl();
 
         this.brush = new Brush(this);
 
-        this.gui = new Gui(this, this.guiHTML, this.container);
+        this.gui = gui;
         this.canvas = this.gui.canvas;
+        this.gl = gl;
+        this.programs = programs;
         
         this.resizeRequester = new Requester((width, height) => {
             this.resize(width, height);
@@ -211,10 +213,6 @@ class App {
             this.draw();
             this.gui.update(this);
         });
-
-        if (!(this.gl = GL.initializeContext(this.canvas))) return false;
-        
-        let gl = this.gl;
 
         this.camera = new Camera();
 
@@ -308,67 +306,6 @@ class App {
         );
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.pointIndices, gl.STATIC_DRAW);
         gl.bindVertexArray(null);
-
-        let programInfo = {
-            "checker": {
-                shaders: ["checker.vert", "checker.frag"],
-                uniforms: ["projection", "checkerSize"],
-                attribs: ["pos"]
-            },
-            "chunk": {
-                shaders: ["chunk.vert", "chunk.frag"],
-                uniforms: ["modelView", "projection", "texture", "chunkSize"],
-                attribs: ["pos"]
-            },
-            "solid": {
-                shaders: ["chunk.vert", "solid.frag"],
-                uniforms: ["modelView", "projection", "chunkSize", "colour"],
-                attribs: ["pos"]
-            },
-            "copy": {
-                shaders: ["copy.vert", "copy.frag"],
-                uniforms: ["src"],
-                attribs: ["pos"]
-            },
-            "brush": {
-                shaders: [
-                    "brush.vert",
-                    ["brush.frag", [
-                        ["Pixel", "Ellipse", "Rectangle"],
-                        ["Constant", "Linear", "Spherical", "InverseSpherical", "Cosine"],
-                        ["Mix", "Erase", "Add", "Subtract", "Multiply", "Divide"],
-                        ["", "PreserveAlpha"]
-                    ]]
-                ],
-                uniforms: ["dest", "brush", "projection", "chunkSize", "chunkOffset", "colour", "bias", "gain", "blendStrength"],
-                attribs: ["pos", "instanceOffset"]
-            }
-        };
-        // Get shader sources
-        let scriptElements = this.shaderHTML.getElementsByTagName("script");
-        let includes = {};
-        let sources = {};
-        for (let i = 0; i < scriptElements.length; ++i) {
-            let element = scriptElements[i];
-            let shaderName = element.id;
-            let type = {
-                "x-shader/x-vertex": gl.VERTEX_SHADER,
-                "x-shader/x-fragment": gl.FRAGMENT_SHADER,
-                "x-shader/x-include": "include"
-            }[element.type];
-            if (typeof type !== "undefined") {
-                let src = Util.elementText(element);
-                if (type === "include") {
-                    includes[shaderName] = src;
-                }
-                else {
-                    sources[shaderName] = [src, type];
-                }
-            }
-        }
-        // Build shader programs
-        this.programs = new ShaderProgramManager(this.gl, programInfo, sources, includes);
-        console.log("Shader program variants: " + Object.keys(this.programs).length);
 
         let program;
 
@@ -477,13 +414,16 @@ class App {
         }
     }
 
-    copyImage(src, dest) {
+    copyImage(src, srcPos, srcSize, dest, destPos, destSize) {
         let gl = this.gl;
 
+        let destImagePos = [Math.round(destPos[0] * dest.width), Math.round(destPos[1] * dest.height)];
+        let destImageSize = [Math.round((destPos[0] + destSize[0]) * dest.width - destImagePos[0]), Math.round((destPos[1] + destSize[1]) * dest.height - destImagePos[0])];
+        
         gl.bindFramebuffer(gl.FRAMEBUFFER, dest.framebufferId);
         gl.viewport(0, 0, dest.width, dest.height);
         gl.enable(gl.SCISSOR_TEST);
-        gl.scissor(0, 0, dest.width, dest.height);
+        gl.scissor(destImagePos[0], destImagePos[1], destImageSize[0], destImageSize[1]);
 
         let program = this.programs["copy"];
         gl.useProgram(program.id);
@@ -639,7 +579,7 @@ class App {
                     if (this.image.has(key) || this.image.addChunk(chunkAddress)) {
                         let chunk = this.image.get(key);
 
-                        this.copyImage(chunk.image, this.workBuffer);
+                        this.copyImage(chunk.image, [0.0, 0.0], [1.0, 1.0], this.workBuffer, [0.0, 0.0], [1.0, 1.0]);
 
                         chunk.bind(gl);
 
