@@ -13,8 +13,8 @@ http://www.wtfpl.net/ for more details.
 
 
 class ShaderProgramManager {
-    constructor(gl, programInfo = null, sources = {}, includes = {}) {
-        if (programInfo) ShaderProgramManager.addPrograms(gl, programInfo, this, sources, includes);
+    constructor(gl, programInfo = null, sources = {}, includes = {}, progress) {
+        if (programInfo) ShaderProgramManager.addPrograms(gl, programInfo, this, sources, includes, progress);
     }
 
     static variantList(variations) {
@@ -76,15 +76,7 @@ class ShaderProgramManager {
         else return programObject;
     }
 
-    static addPrograms(gl, programInfo, programManager, sources, includes) {
-        class ShaderVariant {
-            constructor(shaderName, defines) {
-                this.shaderName = shaderName;
-                this.defines = defines;
-                this.shaderObject = null;
-            }
-        }
-
+    static addPrograms(gl, programInfo, programManager, sources, includes, progress) {
         // Get shader variants
         let shaderVariants = {};
         let programShaderVariants = {};
@@ -109,7 +101,7 @@ class ShaderProgramManager {
                     let variantSubString = defines.join("");
                     let shaderVariant;
                     if (typeof shaderVariants[shaderName][variantSubString] === "undefined") {
-                        shaderVariant = new ShaderVariant(shaderName, defines);
+                        shaderVariant = { "shaderName": shaderName, "defines": defines, "shaderObject": null};
                         shaderVariants[shaderName][variantSubString] = shaderVariant;
                     }
                     else shaderVariant = shaderVariants[shaderName][variantSubString];
@@ -129,6 +121,7 @@ class ShaderProgramManager {
         }
 
         // Compile shader variants
+        progress.nextStage("Compile shaders", 12);
         for (let shaderName in shaderVariants) {
             let variants = shaderVariants[shaderName];
             for (let variantSubString in variants) {
@@ -139,12 +132,14 @@ class ShaderProgramManager {
                 for (let i = 0; i < defines.length; ++i) {
                     if (defines[i] !== "") definesSrc += "#define " + defines[i] + "\n";
                 }
+                progress.nextStep(id);
                 let shaderObject = this.compileShader(gl, definesSrc + src, type);
                 if (shaderObject) shaderVariants[shaderName][variantSubString].shaderObject = shaderObject;
             }
         }
 
         // Build program variants
+        progress.nextStage("Link programs", 12);
         let programShaders = {};
         for (let programName in programInfo) {
             let info = programInfo[programName];
@@ -164,6 +159,7 @@ class ShaderProgramManager {
                         programVariantName += defines[j];
                     }
                 }
+                progress.nextStep(programVariantName);
                 programShaders[programVariantName] = shaderObjects;
                 let programObject = this.buildProgram(gl, shaderObjects);
                 if (programObject) {

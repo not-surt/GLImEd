@@ -13,23 +13,65 @@ http://www.wtfpl.net/ for more details.
 "use strict";
 
 
+
+class Progress {
+    constructor(stages) {
+        this.element = document.createElement("div");
+
+        this.stageLabel = document.createElement("output");
+        this.element.appendChild(this.stageLabel);
+
+        this.element.appendChild(document.createElement("br"));
+
+        this.stageProgress = document.createElement("progress");
+        //this.stageProgress.style.width = "100%";
+        this.element.appendChild(this.stageProgress);
+
+        this.element.appendChild(document.createElement("br"));
+
+        this.stepLabel = document.createElement("output");
+        this.element.appendChild(this.stepLabel);
+
+        this.element.appendChild(document.createElement("br"));
+
+        this.stepProgress = document.createElement("progress");
+        //this.stepProgress.style.width = "100%";
+        this.element.appendChild(this.stepProgress);
+
+        this.stageProgress.max = stages;
+        this.stageProgress.value = -1;
+        this.stageLabel.value = "";
+    }
+
+    nextStage(label, steps) {
+        this.stageProgress.value++;
+        this.stageLabel.value = label + " (" + this.stageProgress.value + " of " + this.stageProgress.max + ")";
+        this.stepProgress.max = steps;
+        this.stepProgress.value = -1;
+        this.stepLabel.value = "";
+    }
+
+    nextStep(label) {
+        this.stepProgress.value++;
+        this.stepLabel.value = label + " (" + this.stepProgress.value + " of " + this.stepProgress.max + ")";
+    }
+}
+
+
+
 class Loader {
     constructor(container) {
         if (!Loader.pollyfilled) {
             Loader.polyfill();
             Loader.pollyfilled = true;
         }
-        
-        this.container = container;
-        
-        this.progressElement = document.createElement("progress");
-        this.progressElement.max = 0;
-        this.progressElement.value = 0;
-        this.progressElement.style.width = "100%";
-        document.body.appendChild(this.progressElement);
 
+        this.container = container;
         this.guiHTML = null;
         this.shaderHTML = null;
+
+        this.progress = new Progress(3);
+        document.body.appendChild(this.progress.element);
 
         let preloads = [
             [Loader.loadCSS, "css/gui.css"],
@@ -37,29 +79,28 @@ class Loader {
             [Loader.loadHTML, "html/shaders.html", (result) => { this.shaderHTML = result.head; }]
         ];
         let scripts = [
-            "js/lib/gl-matrix.js",
-            "js/lib/tinycolor.js",
-            "js/lib/omggif.js",
-            "js/lib/pako.js",
-            "js/util.js",
-            "js/image.js",
-            "js/file.js",
-            "js/program.js",
-            "js/tool.js",
-            "js/gui.js",
-            "js/input.js",
-            "js/gl.js",
-            "js/app.js"
+            "lib/gl-matrix.js",
+            "lib/tinycolor.js",
+            "lib/omggif.js",
+            "lib/pako.js",
+            "util.js",
+            "image.js",
+            "file.js",
+            "program.js",
+            "tool.js",
+            "gui.js",
+            "input.js",
+            "gl.js",
+            "app.js"
         ];
         for (let script of scripts) {
-            preloads.push([Loader.loadScript, script]);
+            preloads.push([Loader.loadScript, "js/" + script]);
         }
-        this.progressElement.max += preloads.length;
-        Loader.preload(preloads, this.start.bind(this), this.progress.bind(this));
+        this.progress.nextStage("Preloading", preloads.length);
+        Loader.preload(preloads, this.start.bind(this), (label) => { this.progress.nextStep(label); });
     }
-    
+
     static polyfill() {
-        // Polyfills
         Element.prototype.requestFullscreen = Element.prototype.requestFullscreen || Element.prototype.webkitRequestFullscreen || Element.prototype.mozRequestFullScreen;
         document.exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
         if (typeof document.fullscreenElement === "undefined") {
@@ -81,7 +122,7 @@ class Loader {
             });
         }
     }
-    
+
     static loadHTML(url, callback) {
         let iframe = document.createElement("iframe");
         iframe.src = url;
@@ -114,23 +155,19 @@ class Loader {
             //script.parentNode.removeChild(script);
         });
     }
-    
-    static preload(preloads, nextFunc, progress) {
+
+    static preload(preloads, nextFunc, progressFunc) {
         let preloadsRemaining = preloads.length;
         for (let [loadFunc, url, preloadChainFunc] of preloads) {
             let capturedChainFunc = preloadChainFunc;
             loadFunc(url, (result) => {
-                if (typeof progress !== "undefined") progress();
+                if (typeof progressFunc !== "undefined") progressFunc(url);
                 if (capturedChainFunc) capturedChainFunc(result);
                 if (--preloadsRemaining === 0) requestAnimationFrame(nextFunc);
             });
-        }        
+        }
     }
-    
-    progress() {
-        this.progressElement.value++;
-    }
-    
+
     start() {
         let gui = new Gui(this.guiHTML, this.container);
         let canvas = gui.canvas;
@@ -140,52 +177,16 @@ class Loader {
         console.log("Shader program variants: " + Object.keys(programs).length);
 
         let app = new App(this.container);
-
         let resize = () => { app.resizeRequester.request(window.innerWidth, window.innerHeight); };
         window.addEventListener("pageshow", resize);
         window.addEventListener("resize", resize);
         app.initialize(gui, gl, programs);
         app.canvas.focus();
         resize();
-        document.body.removeChild(this.progressElement);
+        document.body.removeChild(this.progress.element);
     }
-    
+
     buildPrograms(gl) {
-        let programInfo = {
-            "checker": {
-                shaders: ["checker.vert", "checker.frag"],
-                uniforms: ["projection", "checkerSize"],
-                attribs: ["pos"]
-            },
-            "chunk": {
-                shaders: ["chunk.vert", "chunk.frag"],
-                uniforms: ["modelView", "projection", "texture", "chunkSize"],
-                attribs: ["pos"]
-            },
-            "solid": {
-                shaders: ["chunk.vert", "solid.frag"],
-                uniforms: ["modelView", "projection", "chunkSize", "colour"],
-                attribs: ["pos"]
-            },
-            "copy": {
-                shaders: ["copy.vert", "copy.frag"],
-                uniforms: ["src"],
-                attribs: ["pos"]
-            },
-            "brush": {
-                shaders: [
-                    "brush.vert",
-                    ["brush.frag", [
-                        ["Pixel", "Ellipse", "Rectangle"],
-                        ["Constant", "Linear", "Spherical", "InverseSpherical", "Cosine"],
-                        ["Mix", "Erase", "Add", "Subtract", "Multiply", "Divide"],
-                        ["", "PreserveAlpha"]
-                    ]]
-                ],
-                uniforms: ["dest", "brush", "projection", "chunkSize", "chunkOffset", "colour", "bias", "gain", "blendStrength"],
-                attribs: ["pos", "instanceOffset"]
-            }
-        };
         // Get shader sources
         let scriptElements = this.shaderHTML.getElementsByTagName("script");
         let includes = {};
@@ -209,6 +210,42 @@ class Loader {
             }
         }
         // Build shader programs
-        return new ShaderProgramManager(gl, programInfo, sources, includes);
+        return new ShaderProgramManager(gl, Loader.programInfo, sources, includes, this.progress);
     }
 }
+
+Loader.programInfo = {
+    "checker": {
+        shaders: ["checker.vert", "checker.frag"],
+        uniforms: ["projection", "checkerSize"],
+        attribs: ["pos"]
+    },
+    "chunk": {
+        shaders: ["chunk.vert", "chunk.frag"],
+        uniforms: ["modelView", "projection", "texture", "chunkSize"],
+        attribs: ["pos"]
+    },
+    "solid": {
+        shaders: ["chunk.vert", "solid.frag"],
+        uniforms: ["modelView", "projection", "chunkSize", "colour"],
+        attribs: ["pos"]
+    },
+    "copy": {
+        shaders: ["copy.vert", "copy.frag"],
+        uniforms: ["src"],
+        attribs: ["pos"]
+    },
+    "brush": {
+        shaders: [
+            "brush.vert",
+            ["brush.frag", [
+                ["Pixel", "Ellipse", "Rectangle"],
+                ["Constant", "Linear", "Spherical", "InverseSpherical", "Cosine"],
+                ["Mix", "Erase", "Add", "Subtract", "Multiply", "Divide"],
+                ["", "PreserveAlpha"]
+            ]]
+        ],
+        uniforms: ["dest", "brush", "projection", "chunkSize", "chunkOffset", "colour", "bias", "gain", "blendStrength"],
+        attribs: ["pos", "instanceOffset"]
+    }
+};
